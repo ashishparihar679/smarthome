@@ -1,0 +1,30 @@
+<h1>Simple Quiz</h1>
+
+<form method="POST">
+{% csrf_token %}
+
+{% for q in questions %}
+
+<p>{{ q.ques }}</p>
+
+<input type="radio" name="{{ q.id }}" value="{{ q.op1 }}">
+{{ q.op1 }} <br>
+
+<input type="radio" name="{{ q.id }}" value="{{ q.op2 }}">
+{{ q.op2 }} <br>
+
+<input type="radio" name="{{ q.id }}" value="{{ q.op3 }}">
+{{ q.op3 }} <br>
+
+<input type="radio" name="{{ q.id }}" value="{{ q.op4 }}">
+{{ q.op4 }} <br><br>
+
+<hr>
+
+{% endfor %}
+
+<button type="submit">Submit</button>
+
+</form>
+
+<h2>Your Score: {{ score }}</h2>

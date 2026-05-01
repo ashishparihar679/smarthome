@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>show</title>
+  </head>
+  <body>
+
+    <table border="1">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>mobile</th>
+        <th>email</th>
+        <th>password</th>
+        <th>action</th>
+      </tr>
+
+      {% for s in as %}
+      <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.name }}</td>
+        <td>{{ s.age }}</td>
+        <td>{{ s.mobile }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.password }}</td>
+        <td>
+            <a href="{% url 'delete_user' s.id %}">Delete</a>
+        
+            <a href="{% url 'user_edit' s.id %}">edit</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </table>
+    <button>
+      <a href="{% url "add_data" %}">ADD DATA</a>
+    </button>
+
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>add</title>
+  </head>
+  <body>
+   
+    <h2>Add Student</h2>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <input type="text" name="name" placeholder="Enter Name" required />
+      <br /><br />
+
+      <input type="number" name="age" placeholder="Enter Age" required />
+      <br /><br />
+      <input type="number" name="mobile" placeholder="Enter mobile" required />
+      <br /><br />
+      <input type="email" name="email" placeholder="Enter email" required />
+      <br /><br />
+      <input type="number" name="password" placeholder="Enter password" required />
+      <br /><br />
+
+      <button type="submit">Submit</button>
+    </form>
+      <button>
+      <a href="{% url "user_homeww" %}">SHOW DATA</a>
+    </button>
+  </body>
+</html>

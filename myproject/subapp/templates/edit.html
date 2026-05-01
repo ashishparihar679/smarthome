@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>add</title>
+  </head>
+  <body>
+<h2>Edit Student</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <input type="text" name="name" value="{{ stu.name }}"><br><br>
+    <input type="number" name="age" value="{{ stu.age }}"><br><br>
+    <input type="text" name="mobile" value="{{ stu.mobile }}"><br><br>
+    <input type="email" name="email" value="{{ stu.email }}"><br><br>
+    <input type="text" name="password" value="{{ stu.password }}"><br><br>
+
+    <button type="submit">Update</button>
+</form>
+      <button>
+      <a href="{% url "user_homeww" %}">SHOW DATA</a>
+    </button>
+  </body>
+</html>
+

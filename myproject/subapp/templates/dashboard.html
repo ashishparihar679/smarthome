@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h2>Welcome {{ student.name }} 🎉</h2>
+
+<p><b>Email:</b> {{ student.email }}</p>
+<p><b>Mobile:</b> {{ student.mobile }}</p>
+<p><b>Age:</b> {{ student.age }}</p>
+<p><b>Age:</b> {{ student.password }}</p>
+
+<hr>
+
+{% comment %} <h2>Welcome {{ student.name }}</h2> {% endcomment %}
+
+{% if record and record.pimage %}
+    <img src="{{ record.pimage.url }}" width="150" height="150">
+{% else %}
+    <p>No image uploaded</p>
+{% endif %}
+
+<p>Address: {{ record.address }}</p>
+
+<hr>
+
+
+<a href="{% url 'user_homeww' %}">Go to Student List</a>
+<br><br>
+<hr>
+<form method="post" action="{% url 'delete_account' %}">
+    {% csrf_token %}
+    <button type="submit">
+        Delete My Account
+    </button>
+</form>
+
+<hr>
+<a href="{% url 'logout' %}">Logout</a>
+
+</body>
+</html>
