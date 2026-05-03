@@ -8,24 +8,37 @@ import { FaUsers } from "react-icons/fa"
 function AdminUsers(){
 
 const [users,setUsers] = useState([])
+const [services,setServices] = useState([])
+
 const [loading,setLoading] = useState(false)
-
-const [username,setUsername] = useState("")
-const [password,setPassword] = useState("")
-const [firstName,setFirstName] = useState("")
-const [lastName,setLastName] = useState("")
-const [email,setEmail] = useState("")
-const [phone,setPhone] = useState("")
-const [role,setRole] = useState("USER")
-
 const [editId,setEditId] = useState(null)
+
+/* FORM STATE */
+const [form,setForm] = useState({
+  username:"",
+  password:"",
+  firstName:"",
+  lastName:"",
+  email:"",
+  phone:"",
+  role:"USER",
+  serviceId:""
+})
+
+/* FILTER + SEARCH */
+const [search,setSearch] = useState("")
+const [filterService,setFilterService] = useState("")
+
+/* PAGINATION */
+const [currentPage,setCurrentPage] = useState(1)
+const usersPerPage = 5
 
 useEffect(()=>{
   loadUsers()
+  loadServices()
 },[])
 
 /* LOAD USERS */
-
 const loadUsers = async ()=>{
 try{
   const res = await API.get("users/")
@@ -35,34 +48,66 @@ try{
 }
 }
 
-/* ADD USER */
+/* LOAD SERVICES */
+const loadServices = async ()=>{
+try{
+  const res = await API.get("services/")
+  setServices(res.data || [])
+}catch{
+  toast.error("Failed to load services")
+}
+}
 
-const addUser = async ()=>{
+/* HANDLE INPUT */
+const handleChange = (e)=>{
+  setForm({...form,[e.target.name]:e.target.value})
+}
 
-if(!username || !password){
-  toast.warning("Username and Password required")
+/* ADD / UPDATE */
+const submitUser = async ()=>{
+
+if(!form.username){
+  toast.warning("Username required")
+  return
+}
+
+if(!editId && !form.password){
+  toast.warning("Password required")
+  return
+}
+
+if(form.role === "WORKER" && !form.serviceId){
+  toast.warning("Select service")
   return
 }
 
 try{
   setLoading(true)
 
-  await API.post("user/add/",{
-    username,
-    password,
-    first_name:firstName,
-    last_name:lastName,
-    email,
-    phone,
-    role
-  })
+  const payload = {
+    username:form.username,
+    password:form.password,
+    first_name:form.firstName,
+    last_name:form.lastName,
+    email:form.email,
+    phone:form.phone,
+    role:form.role,
+    service: form.role === "WORKER" ? form.serviceId : null
+  }
 
-  toast.success("User Added")
+  if(editId){
+    await API.put(`user/update/${editId}/`,payload)
+    toast.success("User Updated")
+  }else{
+    await API.post("user/add/",payload)
+    toast.success("User Added")
+  }
+
   clearForm()
   loadUsers()
 
 }catch{
-  toast.error("Error adding user")
+  toast.error("Operation Failed")
 }finally{
   setLoading(false)
 }
@@ -70,141 +115,142 @@ try{
 }
 
 /* EDIT */
-
-const editUser = (user)=>{
-  setEditId(user.id)
-  setUsername(user.username || "")
-  setFirstName(user.first_name || "")
-  setLastName(user.last_name || "")
-  setEmail(user.email || "")
-  setPhone(user.phone || "")
-  setRole(user.role || "USER")
-}
-
-/* UPDATE */
-
-const updateUser = async ()=>{
-
-try{
-  await API.put(`user/update/${editId}/`,{
-    username,
-    first_name:firstName,
-    last_name:lastName,
-    email,
-    phone,
-    role
+const editUser = (u)=>{
+  setEditId(u.id)
+  setForm({
+    username:u.username || "",
+    password:"",
+    firstName:u.first_name || "",
+    lastName:u.last_name || "",
+    email:u.email || "",
+    phone:u.phone || "",
+    role:u.role || "USER",
+    serviceId:u.service || ""
   })
 
-  toast.success("User Updated")
-  clearForm()
-  loadUsers()
-
-}catch{
-  toast.error("Update Failed")
-}
-
+  window.scrollTo({top:0,behavior:"smooth"}) // 👈 FORM TOP PE
 }
 
 /* DELETE */
-
 const deleteUser = async (id)=>{
-
 const result = await Swal.fire({
   title:"Delete User?",
-  text:"This action cannot be undone",
   icon:"warning",
-  showCancelButton:true,
-  confirmButtonColor:"#e74c3c"
+  showCancelButton:true
 })
 
 if(result.isConfirmed){
-  try{
-    await API.delete(`user/delete/${id}/`)
-    toast.success("User Deleted")
-    loadUsers()
-  }catch{
-    toast.error("Delete Failed")
-  }
+  await API.delete(`user/delete/${id}/`)
+  toast.success("Deleted")
+  loadUsers()
 }
-
 }
 
 /* CLEAR */
-
 const clearForm = ()=>{
   setEditId(null)
-  setUsername("")
-  setPassword("")
-  setFirstName("")
-  setLastName("")
-  setEmail("")
-  setPhone("")
-  setRole("USER")
+  setForm({
+    username:"",
+    password:"",
+    firstName:"",
+    lastName:"",
+    email:"",
+    phone:"",
+    role:"USER",
+    serviceId:""
+  })
+}
+
+/* FILTER + SEARCH LOGIC */
+const filteredUsers = users.filter(u=>{
+  return (
+    (u.username.toLowerCase().includes(search.toLowerCase()) ||
+     u.email?.toLowerCase().includes(search.toLowerCase())) &&
+    (filterService ? u.service == filterService : true)
+  )
+})
+
+/* PAGINATION */
+const indexOfLast = currentPage * usersPerPage
+const indexOfFirst = indexOfLast - usersPerPage
+const currentUsers = filteredUsers.slice(indexOfFirst,indexOfLast)
+
+const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
+
+/* GET SERVICE NAME */
+const getServiceName = (id)=>{
+  const s = services.find(x=>x.id == id)
+  return s ? s.name : "-"
 }
 
 return(
 
 <div className="au-container">
 
-<h1 className="au-title">
-<FaUsers/> User Management
-</h1>
+<h1><FaUsers/> User Management</h1>
 
-{/* ===== STATS ===== */}
 
-<div className="au-stats">
-
-<div className="au-stat">
-<h3>{users.length}</h3>
-<p>Total Users</p>
-</div>
-
-<div className="au-stat">
-<h3>{users.filter(u=>u.role==="USER").length}</h3>
-<p>Customers</p>
-</div>
-
-<div className="au-stat">
-<h3>{users.filter(u=>u.role==="WORKER").length}</h3>
-<p>Workers</p>
-</div>
-
-</div>
-
-{/* ===== FORM ===== */}
-
-<motion.div
-className="au-card"
-initial={{opacity:0,y:40}}
-animate={{opacity:1,y:0}}
->
+{/* 🧾 FORM */}
+<motion.div className="au-card">
 
 <h3>{editId ? "Edit User" : "Add User"}</h3>
 
-<input value={username} placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/>
+<input name="username" value={form.username} onChange={handleChange} placeholder="Username"/>
 
 {!editId && (
-<input type="password" value={password} placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
+<input name="password" value={form.password} onChange={handleChange} placeholder="Password"/>
 )}
 
-<input value={firstName} placeholder="First Name" onChange={(e)=>setFirstName(e.target.value)}/>
-<input value={lastName} placeholder="Last Name" onChange={(e)=>setLastName(e.target.value)}/>
-<input value={email} placeholder="Email" onChange={(e)=>setEmail(e.target.value)}/>
-<input value={phone} placeholder="Phone" onChange={(e)=>setPhone(e.target.value)}/>
+<input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name"/>
+<input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name"/>
+<input name="email" value={form.email} onChange={handleChange} placeholder="Email"/>
+<input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone"/>
 
-<select value={role} onChange={(e)=>setRole(e.target.value)}>
+<select name="role" value={form.role} onChange={handleChange}>
 <option value="USER">User</option>
 <option value="WORKER">Worker</option>
 <option value="ADMIN">Admin</option>
 </select>
 
-<button onClick={editId ? updateUser : addUser}>
+{form.role === "WORKER" && (
+<select name="serviceId" value={form.serviceId} onChange={handleChange}>
+<option value="">Select Service</option>
+{services.map(s=>(
+<option key={s.id} value={s.id}>{s.name}</option>
+))}
+</select>
+)}
+
+<button onClick={submitUser}>
 {loading ? "Processing..." : editId ? "Update User" : "Add User"}
 </button>
 
-</motion.div>
+{editId && <button onClick={clearForm}>Cancel</button>}
 
-{/* ===== TABLE ===== */}
+</motion.div>
+<div className="au-filter-bar">
+
+<input
+className="au-search"
+placeholder="Search username/email"
+value={search}
+onChange={(e)=>setSearch(e.target.value)}
+/>
+
+<select
+className="au-select"
+value={filterService}
+onChange={(e)=>setFilterService(e.target.value)}
+>
+<option value="">All Services</option>
+{services.map(s=>(
+<option key={s.id} value={s.id}>{s.name}</option>
+))}
+</select>
+
+</div>
+{/* 📋 TABLE */}
+<div className="au-table-wrapper">
 
 <table className="au-table">
 
@@ -216,33 +262,29 @@ animate={{opacity:1,y:0}}
 <th>Email</th>
 <th>Phone</th>
 <th>Role</th>
+<th>Service</th>
 <th>Action</th>
 </tr>
 </thead>
 
 <tbody>
 
-{users.length === 0 ? (
-<tr><td colSpan="7">No users available</td></tr>
-) : (
-
-users.map(u=>(
+{currentUsers.map(u=>(
 <tr key={u.id}>
-<td>{u.id}</td>
-<td>{u.username}</td>
-<td>{u.first_name} {u.last_name}</td>
-<td>{u.email}</td>
-<td>{u.phone}</td>
-<td>{u.role}</td>
+<td data-label="ID">{u.id}</td>
+<td data-label="Username">{u.username}</td>
+<td data-label="Name">{u.first_name} {u.last_name}</td>
+<td data-label="Email">{u.email}</td>
+<td data-label="Phone">{u.phone}</td>
+<td data-label="Role">{u.role}</td>
+<td data-label="Service">{getServiceName(u.service)}</td>
 
-<td>
-<button className="au-edit" onClick={()=>editUser(u)}>Edit</button>
-<button className="au-delete" onClick={()=>deleteUser(u.id)}>Delete</button>
+<td data-label="Action">
+<button onClick={()=>editUser(u)}>Edit</button>
+<button onClick={()=>deleteUser(u.id)}>Delete</button>
 </td>
 </tr>
-))
-
-)}
+))}
 
 </tbody>
 
@@ -250,6 +292,16 @@ users.map(u=>(
 
 </div>
 
+{/* 📄 PAGINATION */}
+<div style={{marginTop:"10px"}}>
+{[...Array(totalPages)].map((_,i)=>(
+<button key={i} onClick={()=>setCurrentPage(i+1)}>
+{i+1}
+</button>
+))}
+</div>
+
+</div>
 )
 
 }
