@@ -7,8 +7,6 @@ import { motion } from "framer-motion";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
 
-// import "./Login.css";
-
 function Login(){
 
 const navigate = useNavigate()
@@ -18,109 +16,97 @@ const [password,setPassword] = useState("")
 const [showPassword,setShowPassword] = useState(false)
 const [loading,setLoading] = useState(false)
 
-const submitLogin = ()=>{
+const submitLogin = async ()=>{
 
 if(!email || !password){
-toast.warning("Please enter email and password")
-return
+  toast.warning("Please enter email and password")
+  return
 }
 
-setLoading(true)
+try{
+  setLoading(true)
 
-API.post("login/",{
-email:email,
-password:password
-})
+  const res = await API.post("login/",{
+    email,
+    password
+  })
 
-.then(res=>{
+  if(res.data.message === "Login Successful"){
 
-setLoading(false)
+    toast.success("Login Successful")
 
-if(res.data.message === "Login Successful"){
+    const role = res.data.role
 
-toast.success("Login Successful")
+    localStorage.setItem("role", role)
+    localStorage.setItem("user_id", res.data.user_id)
+    localStorage.setItem("email", res.data.email)
 
-const role = res.data.role
+    // ROLE BASED NAVIGATION
+    if(role === "USER") navigate("/UserDashboard")
+    else if(role === "WORKER") navigate("/worker-dashboard")
+    else if(role === "ADMIN") navigate("/admin")
 
-localStorage.setItem("role", res.data.role)
-localStorage.setItem("user_id", res.data.user_id)
-localStorage.setItem("email", res.data.email)
+  }else{
+    toast.error("Login Failed")
+  }
 
-if(role === "USER"){
-navigate("/UserDashboard")
+}catch{
+  toast.error("Invalid Email or Password")
+}finally{
+  setLoading(false)
 }
-
-if(role === "WORKER"){
-navigate("/worker-dashboard")
-}
-
-if(role === "ADMIN"){
-navigate("/admin")
-}
-
-}
-
-})
-.catch(()=>{
-
-setLoading(false)
-
-toast.error("Invalid Email or Password")
-
-})
 
 }
 
 return(
 
-<div className="login-container">
+<div className="lg-container">
 
 <motion.div
-className="login-card"
+className="lg-card"
 initial={{opacity:0,y:40}}
 animate={{opacity:1,y:0}}
 transition={{duration:0.5}}
 >
 
-<h2>Login</h2>
+<h2>Welcome Back 👋</h2>
 
-<div className="input-group">
+{/* EMAIL */}
 
+<div className="lg-input">
 <FaEnvelope/>
-
 <input
 type="email"
-placeholder="Email"
+placeholder="Enter Email"
+value={email}
 onChange={(e)=>setEmail(e.target.value)}
 />
-
 </div>
 
+{/* PASSWORD */}
 
-<div className="input-group">
-
+<div className="lg-input">
 <FaLock/>
-
 <input
 type={showPassword ? "text" : "password"}
-placeholder="Password"
+placeholder="Enter Password"
+value={password}
 onChange={(e)=>setPassword(e.target.value)}
 />
 
 <span
-className="eye-icon"
+className="lg-eye"
 onClick={()=>setShowPassword(!showPassword)}
 >
-
 {showPassword ? <FaEyeSlash/> : <FaEye/>}
-
 </span>
 
 </div>
 
+{/* BUTTON */}
 
 <button
-className="login-btn"
+className="lg-btn"
 onClick={submitLogin}
 disabled={loading}
 >
@@ -128,14 +114,17 @@ disabled={loading}
 {loading ? <ClipLoader size={20} color="#fff"/> : "Login"}
 
 </button>
-<br />
-<p>if you are not signup please signup here</p>
+
+<p className="lg-text">
+Don't have an account?
+</p>
+
 <button
 type="button"
-className="login-btn"
+className="lg-btn secondary"
 onClick={()=>navigate("/signup")}
 >
-signup
+Signup
 </button>
 
 </motion.div>

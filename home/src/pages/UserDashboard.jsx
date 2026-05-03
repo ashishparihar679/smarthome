@@ -14,6 +14,7 @@ const userId = localStorage.getItem("user_id")
 
 const [profile,setProfile] = useState({})
 const [bookings,setBookings] = useState([])
+const [loading,setLoading] = useState(true)
 const [edit,setEdit] = useState(false)
 
 const [firstName,setFirstName] = useState("")
@@ -21,100 +22,133 @@ const [lastName,setLastName] = useState("")
 const [email,setEmail] = useState("")
 const [phone,setPhone] = useState("")
 
+/* LOAD DATA */
+
 useEffect(()=>{
-
-API.get(`user/profile/${userId}/`)
-.then(res=>{
-setProfile(res.data)
-
-setFirstName(res.data.first_name)
-setLastName(res.data.last_name)
-setEmail(res.data.email)
-setPhone(res.data.phone)
-
-})
-
-API.get("bookings/")
-.then(res=>{
-const myBookings = res.data.filter(b=>b.user==userId)
-setBookings(myBookings)
-})
-
+loadData()
 },[])
 
-const updateProfile = ()=>{
+const loadData = async ()=>{
+try{
 
-API.put(`user/profile/${userId}/`,{
+  const [profileRes, bookingRes] = await Promise.all([
+    API.get(`user/profile/${userId}/`),
+    API.get("bookings/")
+  ])
 
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone
+  const profileData = profileRes.data
 
-})
-.then(()=>{
-toast.success("Profile Updated")
-setEdit(false)
-})
+  setProfile(profileData)
+  setFirstName(profileData.first_name || "")
+  setLastName(profileData.last_name || "")
+  setEmail(profileData.email || "")
+  setPhone(profileData.phone || "")
+
+  // FIX: userId type issue
+  const myBookings = (bookingRes.data || []).filter(
+    b => String(b.user) === String(userId)
+  )
+
+  setBookings(myBookings)
+
+}catch{
+  toast.error("Failed to load data")
+}finally{
+  setLoading(false)
+}
 
 }
 
-const cancelBooking = (id)=>{
+/* UPDATE PROFILE */
 
-Swal.fire({
-title:"Cancel Booking?",
-text:"Are you sure?",
-icon:"warning",
-showCancelButton:true,
-confirmButtonColor:"#e74c3c"
-}).then((result)=>{
+const updateProfile = async ()=>{
+
+try{
+  await API.put(`user/profile/${userId}/`,{
+    first_name:firstName,
+    last_name:lastName,
+    email,
+    phone
+  })
+
+  toast.success("Profile Updated")
+  setEdit(false)
+
+}catch{
+  toast.error("Update Failed")
+}
+
+}
+
+/* CANCEL BOOKING */
+
+const cancelBooking = async (id)=>{
+
+const result = await Swal.fire({
+  title:"Cancel Booking?",
+  text:"Are you sure?",
+  icon:"warning",
+  showCancelButton:true,
+  confirmButtonColor:"#e74c3c"
+})
 
 if(result.isConfirmed){
 
-API.put(`booking/cancel/${id}/`)
-.then(()=>{
+  try{
+    await API.put(`booking/cancel/${id}/`)
 
-toast.success("Booking Cancelled")
+    toast.success("Booking Cancelled")
 
-setBookings(bookings.map(b=>
-b.id===id ? {...b,status:"CANCELLED"} : b
-))
+    setBookings(prev =>
+      prev.map(b =>
+        b.id===id ? {...b,status:"CANCELLED"} : b
+      )
+    )
 
-})
+  }catch{
+    toast.error("Cancel failed")
+  }
 
 }
 
-})
-
 }
+
+/* LOGOUT */
 
 const logout = ()=>{
 localStorage.clear()
 window.location.href="/login"
 }
 
+/* LOADING */
+
+if(loading){
+return <p style={{textAlign:"center"}}>Loading...</p>
+}
+
+/* UI */
+
 return(
 
-<div className="user-dashboard">
+<div className="ud-container">
 
-<h1>User Dashboard</h1>
+<h1 className="ud-title">User Dashboard</h1>
 
-<button className="logout-btn" onClick={logout}>
+<button className="ud-logout" onClick={logout}>
 Logout
 </button>
 
+{/* ===== STATS ===== */}
 
-{/* STATS */}
+<div className="ud-stats">
 
-<div className="dashboard-stats">
-
-<div className="stat-card">
+<div className="ud-stat">
 <FaUser/>
 <h3>{profile.first_name}</h3>
 <p>User Profile</p>
 </div>
 
-<div className="stat-card">
+<div className="ud-stat">
 <FaCalendarCheck/>
 <h3>{bookings.length}</h3>
 <p>Total Bookings</p>
@@ -122,14 +156,9 @@ Logout
 
 </div>
 
+{/* ===== PROFILE ===== */}
 
-{/* PROFILE */}
-
-<motion.div
-className="dashboard-card"
-initial={{opacity:0,y:30}}
-animate={{opacity:1,y:0}}
->
+<motion.div className="ud-card">
 
 <h2>My Profile</h2>
 
@@ -141,10 +170,7 @@ animate={{opacity:1,y:0}}
 <p><b>Email:</b> {profile.email}</p>
 <p><b>Phone:</b> {profile.phone}</p>
 
-<button
-className="primary-btn"
-onClick={()=>setEdit(true)}
->
+<button className="ud-btn" onClick={()=>setEdit(true)}>
 Edit Profile
 </button>
 
@@ -152,32 +178,14 @@ Edit Profile
 
 ) : (
 
-<div className="edit-form">
+<div className="ud-form">
 
-<input
-value={firstName}
-onChange={e=>setFirstName(e.target.value)}
-/>
+<input value={firstName} onChange={e=>setFirstName(e.target.value)}/>
+<input value={lastName} onChange={e=>setLastName(e.target.value)}/>
+<input value={email} onChange={e=>setEmail(e.target.value)}/>
+<input value={phone} onChange={e=>setPhone(e.target.value)}/>
 
-<input
-value={lastName}
-onChange={e=>setLastName(e.target.value)}
-/>
-
-<input
-value={email}
-onChange={e=>setEmail(e.target.value)}
-/>
-
-<input
-value={phone}
-onChange={e=>setPhone(e.target.value)}
-/>
-
-<button
-className="primary-btn"
-onClick={updateProfile}
->
+<button className="ud-btn" onClick={updateProfile}>
 Save
 </button>
 
@@ -187,21 +195,21 @@ Save
 
 </motion.div>
 
+{/* ===== BOOKINGS ===== */}
 
-{/* BOOKINGS */}
-
-<motion.div
-className="dashboard-card"
-initial={{opacity:0,y:30}}
-animate={{opacity:1,y:0}}
->
+<motion.div className="ud-card">
 
 <h2>My Bookings</h2>
 
-<table className="dashboard-table">
+{bookings.length === 0 ? (
+
+<p>No bookings found</p>
+
+) : (
+
+<table className="ud-table">
 
 <thead>
-
 <tr>
 <th>ID</th>
 <th>Service</th>
@@ -211,7 +219,6 @@ animate={{opacity:1,y:0}}
 <th>Status</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody>
@@ -225,21 +232,17 @@ animate={{opacity:1,y:0}}
 <td>{b.worker_name}</td>
 <td>{b.booking_date}</td>
 <td>{b.address}</td>
-<td className={`status-${b.status}`}>
+
+<td className={`ud-${b.status}`}>
 {b.status}
 </td>
 
 <td>
 
 {b.status==="PENDING" && (
-
-<button
-className="cancel-btn"
-onClick={()=>cancelBooking(b.id)}
->
+<button className="ud-cancel" onClick={()=>cancelBooking(b.id)}>
 Cancel
 </button>
-
 )}
 
 </td>
@@ -251,6 +254,8 @@ Cancel
 </tbody>
 
 </table>
+
+)}
 
 </motion.div>
 

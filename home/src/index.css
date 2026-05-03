@@ -1,68 +1,2301 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* ================= GOOGLE FONT ================= */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ================= GLOBAL RESET ================= */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+body{
+background:linear-gradient(120deg,#f6f9fc,#eef2f7);
+min-height:100vh;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* ================= PAGE ANIMATION ================= */
+
+.page{
+animation:fadeIn .5s ease;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+@keyframes fadeIn{
+
+from{
+opacity:0;
+transform:translateY(20px);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+to{
+opacity:1;
+transform:translateY(0);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+}
+
+/* ===== ROOT ===== */
+
+:root{
+  --sm-color-primary:#2563eb;
+  --sm-color-accent:#60a5fa;
+  --sm-color-text:#1f2937;
+  --sm-bg:rgba(255,255,255,0.75);
+}
+
+/* ===== NAVBAR ===== */
+
+.sm-navbar{
+  position:sticky;
+  top:0;
+
+  backdrop-filter:blur(20px);
+  background:var(--sm-bg);
+
+  border-bottom:1px solid rgba(0,0,0,0.05);
+
+  box-shadow:0 8px 25px rgba(0,0,0,0.05);
+  z-index:999;
+}
+
+/* ===== CONTAINER ===== */
+
+.sm-container{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  max-width:1200px;
+  margin:auto;
+  padding:14px 20px;
+}
+
+/* ===== LOGO ===== */
+
+.sm-logo{
+  font-size:22px;
+  font-weight:700;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+
+  cursor:pointer;
+}
+
+/* ===== LINKS ===== */
+
+.sm-links{
+  display:flex;
+  gap:24px;
+  list-style:none;
+  align-items:center;
+}
+
+.sm-links li{
+  position:relative;
+}
+
+/* ===== LINK ===== */
+
+.sm-links a{
+  text-decoration:none;
+  color:var(--sm-color-text);
+
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  font-weight:500;
+  padding:6px 0;
+
+  position:relative;
+}
+
+/* ===== HOVER ===== */
+
+.sm-links a::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:-4px;
+
+  width:0%;
+  height:2px;
+
+  background:var(--sm-color-primary);
+  transition:0.3s;
+}
+
+.sm-links a:hover::after{
+  width:100%;
+}
+
+/* ===== ACTIVE ===== */
+
+.sm-active a{
+  color:var(--sm-color-primary);
+}
+
+.sm-active::after{
+  content:"";
+  position:absolute;
+  bottom:-4px;
+  left:0;
+
+  width:100%;
+  height:2px;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+/* ===== BUTTON ===== */
+
+.sm-theme-btn{
+  border:none;
+  padding:6px 10px;
+
+  border-radius:8px;
+  cursor:pointer;
+
+  background:#f3f4f6;
+}
+
+/* ===== LOGOUT ===== */
+
+.sm-logout-btn{
+  border:none;
+  padding:6px 14px;
+
+  border-radius:8px;
+
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  color:white;
+}
+
+/* ===== MENU ICON ===== */
+
+.sm-menu-icon{
+  display:none;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* ===== MOBILE ===== */
+
+@media(max-width:768px){
+
+  .sm-menu-icon{
+    display:block;
   }
-  a:hover {
-    color: #747bff;
+
+  .sm-links{
+    position:absolute;
+    top:70px;
+    right:20px;
+
+    flex-direction:column;
+    background:white;
+
+    padding:20px;
+    border-radius:12px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+
+    opacity:0;
+    transform:translateY(-10px);
+    pointer-events:none;
+
+    transition:0.3s;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .sm-links.open{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:all;
   }
 }
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark{
+  background:#0f172a;
+  color:#e5e7eb;
+}
+
+.smarthome-dark .sm-navbar{
+  background:rgba(15,23,42,0.85);
+}
+
+.smarthome-dark .sm-links a{
+  color:#e5e7eb;
+}
+
+.smarthome-dark .sm-links{
+  background:#1e293b;
+}
+
+/* ===== ROOT ===== */
+
+:root{
+  --sm-primary:#2563eb;
+  --sm-accent:#60a5fa;
+  --sm-bg:#f8fafc;
+}
+
+/* ===== PAGE ===== */
+
+.sm-home{
+  background:var(--sm-bg);
+}
+/* SERVICE ========================== */
+/* ===== HERO ===== */
+
+.sm-hero{
+  height:320px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  text-align:center;
+}
+
+.sm-hero-overlay h1{
+  font-size:32px;
+  margin-bottom:10px;
+}
+
+/* ===== TITLE ===== */
+
+.sm-title{
+  text-align:center;
+  margin:40px 0 20px;
+}
+
+/* ===== GRID ===== */
+
+.sm-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:25px;
+  padding:20px;
+}
+
+/* ===== CARD ===== */
+
+.sm-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+  text-align:center;
+
+  box-shadow:0 10px 25px rgba(0,0,0,0.06);
+
+  transition:0.3s;
+}
+
+.sm-card:hover{
+  transform:translateY(-8px);
+}
+
+/* ===== ICON ===== */
+
+.sm-icon{
+  font-size:30px;
+  color:var(--sm-primary);
+  margin-bottom:10px;
+}
+
+/* ===== BUTTON ===== */
+
+.sm-btn-primary{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+
+  cursor:pointer;
+  margin-top:10px;
+}
+
+/* ===== WHY ===== */
+
+.sm-why{
+  margin-top:50px;
+  text-align:center;
+}
+
+.sm-why-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+.sm-why-card{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+
+  box-shadow:0 5px 20px rgba(0,0,0,0.05);
+}
+
+/* ===== CTA ===== */
+
+.sm-cta{
+  text-align:center;
+  padding:40px;
+  background:#e0f2fe;
+}
+
+/* ===== EMPTY ===== */
+
+.sm-empty{
+  text-align:center;
+  grid-column:1/-1;
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .sm-home{
+  background:#0f172a;
+}
+
+.smarthome-dark .sm-card,
+.smarthome-dark .sm-why-card{
+  background:#1e293b;
+  color:white;
+}
+
+/* ABOUT========================= */
+
+
+/* ===== ROOT VARIABLES ===== */
+
+:root{
+  --ab-primary:#2563eb;
+  --ab-accent:#60a5fa;
+  --ab-text:#1f2937;
+  --ab-bg:#f8fafc;
+}
+
+/* ===== SECTION ===== */
+
+.about-section{
+  padding:90px 30px;
+
+  background: linear-gradient(135deg,#f8fafc,#eef2ff);
+
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle background glow */
+
+.about-section::before{
+  content:"";
+  position:absolute;
+  top:-100px;
+  right:-100px;
+
+  width:300px;
+  height:300px;
+
+  background: radial-gradient(circle,#60a5fa40,transparent);
+
+  z-index:0;
+}
+
+/* ===== CONTAINER ===== */
+
+.about-container{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:50px;
+
+  max-width:1200px;
+  margin:auto;
+
+  position:relative;
+  z-index:1;
+}
+
+/* ===== LEFT ===== */
+
+.about-left{
+  flex:1;
+}
+
+/* heading */
+
+.about-left h2{
+  font-size:34px;
+  font-weight:700;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+
+  margin-bottom:20px;
+}
+
+/* paragraph */
+
+.about-left p{
+  color:#4b5563;
+  line-height:1.7;
+
+  margin-bottom:30px;
+  font-size:15px;
+}
+
+/* ===== STATS ===== */
+
+.about-stats{
+  display:flex;
+  gap:20px;
+
+  margin-bottom:35px;
+}
+
+/* card */
+
+.stat-box{
+  flex:1;
+
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(12px);
+
+  padding:20px;
+  border-radius:14px;
+
+  text-align:center;
+
+  border:1px solid rgba(255,255,255,0.3);
+
+  box-shadow:0 8px 25px rgba(0,0,0,0.05);
+
+  transition:0.35s;
+}
+
+/* hover animation */
+
+.stat-box:hover{
+  transform: translateY(-8px) scale(1.03);
+  box-shadow:0 15px 40px rgba(0,0,0,0.12);
+}
+
+/* icon */
+
+.stat-icon{
+  font-size:26px;
+
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:white;
+
+  padding:10px;
+  border-radius:50%;
+
+  margin-bottom:10px;
+}
+
+/* numbers */
+
+.stat-box h3{
+  font-size:20px;
+  font-weight:700;
+  color:var(--ab-text);
+}
+
+/* label */
+
+.stat-box p{
+  font-size:13px;
+  color:#6b7280;
+}
+
+/* ===== BUTTON ===== */
+
+.book-btn{
+  background: linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:12px 22px;
+
+  border-radius:10px;
+
+  font-weight:500;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+/* hover */
+
+.book-btn:hover{
+  transform: translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* ===== RIGHT ===== */
+
+.about-right{
+  flex:1;
+}
+
+/* MAP */
+
+.map{
+  width:100%;
+  height:340px;
+
+  border:none;
+  border-radius:16px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+
+  transition:0.3s;
+}
+
+.map:hover{
+  transform:scale(1.02);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media(max-width:768px){
+
+  .about-container{
+    flex-direction:column;
+    text-align:center;
+  }
+
+  .about-stats{
+    flex-direction:column;
+  }
+
+  .stat-box{
+    width:100%;
+  }
+
+  .map{
+    height:260px;
+  }
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .about-section{
+  background: linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+.smarthome-dark .about-left p{
+  color:#cbd5f5;
+}
+
+.smarthome-dark .stat-box{
+  background:rgba(30,41,59,0.7);
+  color:white;
+}
+
+.smarthome-dark .stat-box p{
+  color:#94a3b8;
+}
+
+/* ================= SMART HOME ADD SERVICE CSS ================= */
+
+/* ===== ROOT ===== */
+
+:root{
+  --add-primary:#2563eb;
+  --add-accent:#60a5fa;
+  --add-bg:#f8fafc;
+}
+
+/* ===== CONTAINER ===== */
+
+.add-service-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:85vh;
+
+  background: linear-gradient(135deg,#eef2ff,#f8fafc);
+
+  position:relative;
+  overflow:hidden;
+}
+
+/* background glow */
+
+.add-service-container::before{
+  content:"";
+  position:absolute;
+  top:-120px;
+  left:-120px;
+
+  width:300px;
+  height:300px;
+
+  background: radial-gradient(circle,#60a5fa40,transparent);
+}
+
+/* ===== CARD ===== */
+
+.add-card{
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(14px);
+
+  padding:40px 30px;
+  width:360px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  text-align:center;
+
+  border:1px solid rgba(255,255,255,0.3);
+
+  transition:0.3s;
+
+  position:relative;
+  z-index:1;
+}
+
+/* hover lift */
+
+.add-card:hover{
+  transform: translateY(-6px);
+}
+
+/* ===== TITLE ===== */
+
+.add-title{
+  font-size:24px;
+  font-weight:700;
+
+  margin-bottom:25px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* ===== SELECT ===== */
+
+.service-select{
+  width:100%;
+
+  padding:12px 14px;
+
+  border-radius:10px;
+
+  border:1px solid #e5e7eb;
+
+  font-size:14px;
+
+  background:white;
+
+  transition:0.3s;
+}
+
+/* focus effect */
+
+.service-select:focus{
+  outline:none;
+
+  border-color:var(--add-primary);
+
+  box-shadow:0 0 0 3px rgba(37,99,235,0.2);
+}
+
+/* ===== BUTTON ===== */
+
+.add-btn{
+  width:100%;
+
+  padding:12px;
+
+  margin-top:20px;
+
+  border:none;
+  border-radius:10px;
+
+  background: linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  font-weight:600;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+/* hover */
+
+.add-btn:hover{
+  transform: translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.4);
+}
+
+/* click effect */
+
+.add-btn:active{
+  transform:scale(0.98);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media(max-width:768px){
+
+  .add-card{
+    width:90%;
+    padding:30px 20px;
+  }
+
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .add-service-container{
+  background: linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+.smarthome-dark .add-card{
+  background: rgba(30,41,59,0.7);
+  color:white;
+}
+
+.smarthome-dark .service-select{
+  background:#1e293b;
+  color:white;
+  border:1px solid #334155;
+}
+
+
+/* ================= SMART HOME ADMIN DASHBOARD CSS ================= */
+
+/* ===== ROOT ===== */
+
+:root{
+  --ad-primary:#2563eb;
+  --ad-accent:#60a5fa;
+  --ad-bg:#f1f5f9;
+  --ad-text:#1e293b;
+}
+
+/* ===== CONTAINER ===== */
+
+.admin-container{
+  padding:30px;
+  background:var(--ad-bg);
+  min-height:100vh;
+}
+
+/* ===== TITLE ===== */
+
+.admin-title{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:25px;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* ===== ANALYTICS ===== */
+
+.analytics-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.analytics-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+
+  text-align:center;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+
+  transition:0.3s;
+}
+
+.analytics-card:hover{
+  transform:translateY(-6px);
+}
+
+.analytics-icon{
+  font-size:28px;
+  color:var(--ad-primary);
+  margin-bottom:10px;
+}
+
+/* ===== CHART ===== */
+
+.chart-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+
+  margin-bottom:30px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* ===== ADMIN CARD ===== */
+
+.admin-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+
+  margin-bottom:30px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* ===== INPUT ===== */
+
+.admin-card input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+
+  border-radius:8px;
+  border:1px solid #ddd;
+
+  outline:none;
+}
+
+.admin-card input:focus{
+  border-color:var(--ad-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+/* ===== BUTTON ===== */
+
+.admin-card button{
+  margin-top:10px;
+  padding:10px 15px;
+
+  border:none;
+  border-radius:8px;
+
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.admin-card button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(37,99,235,0.3);
+}
+
+/* ===== SERVICE ADD ===== */
+
+.service-add{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.service-add input{
+  flex:1;
+}
+
+/* ===== SERVICES GRID ===== */
+
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+
+.service-card{
+  background:#f9fafb;
+  padding:15px;
+  border-radius:10px;
+
+  text-align:center;
+
+  transition:0.3s;
+}
+
+.service-card:hover{
+  transform:scale(1.05);
+}
+
+/* DELETE BUTTON */
+
+.delete-btn{
+  margin-top:8px;
+  background:#ef4444;
+}
+
+.delete-btn:hover{
+  background:#dc2626;
+}
+
+/* ===== WORKERS ===== */
+
+.workers-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+}
+
+.worker-card{
+  background:#f9fafb;
+  padding:15px;
+  border-radius:10px;
+
+  text-align:center;
+}
+
+/* STATUS */
+
+.approved{
+  color:#22c55e;
+  font-weight:600;
+}
+
+.pending{
+  color:#f59e0b;
+  font-weight:600;
+}
+
+/* APPROVE BUTTON */
+
+.approve-btn{
+  margin-top:10px;
+  background:#10b981;
+}
+
+.approve-btn:hover{
+  background:#059669;
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .admin-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .admin-card,
+.smarthome-dark .chart-card,
+.smarthome-dark .analytics-card{
+  background:#1e293b;
+  color:white;
+}
+
+.smarthome-dark .service-card,
+.smarthome-dark .worker-card{
+  background:#334155;
+}
+
+/* ================= ADMIN USERS CSS ================= */
+
+.au-container{
+  padding:30px;
+  background:#f1f5f9;
+  min-height:100vh;
+}
+
+/* TITLE */
+
+.au-title{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:25px;
+}
+
+/* STATS */
+
+.au-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.au-stat{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* CARD */
+
+.au-card{
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  margin-bottom:30px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* INPUT */
+
+.au-card input,
+.au-card select{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+
+/* BUTTON */
+
+.au-card button{
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
+}
+
+/* TABLE */
+
+.au-table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.au-table th,
+.au-table td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+}
+
+/* ACTION */
+
+.au-edit{
+  background:#3b82f6;
+  color:white;
+  margin-right:5px;
+}
+
+.au-delete{
+  background:#ef4444;
+  color:white;
+}
+
+/* DARK MODE */
+
+.smarthome-dark .au-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .au-card,
+.smarthome-dark .au-stat,
+.smarthome-dark .au-table{
+  background:#1e293b;
+  color:white;
+}
+
+/* ================= BOOKING PAGE CSS ================= */
+
+:root{
+  --bk-primary:#2563eb;
+  --bk-accent:#60a5fa;
+}
+
+/* CONTAINER */
+
+.bk-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:90vh;
+
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* CARD */
+
+.bk-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(14px);
+
+  padding:35px;
+  width:380px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.bk-card h2{
+  text-align:center;
+  font-weight:700;
+}
+
+/* INPUT */
+
+.bk-input{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  border:1px solid #e5e7eb;
+  padding:10px;
+
+  border-radius:10px;
+  background:white;
+
+  transition:0.3s;
+}
+
+.bk-input:focus-within{
+  border-color:var(--bk-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.bk-input select,
+.bk-input input{
+  border:none;
+  outline:none;
+  width:100%;
+  background:transparent;
+}
+
+/* BUTTON */
+
+.bk-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:12px;
+
+  border-radius:10px;
+
+  font-weight:600;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.bk-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* SUCCESS */
+
+.bk-success{
+  background:white;
+  padding:50px;
+  text-align:center;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.1);
+}
+
+.bk-success button{
+  margin-top:15px;
+  padding:10px 20px;
+
+  border:none;
+  border-radius:8px;
+
+  background:#2563eb;
+  color:white;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+  .bk-card{
+    width:90%;
+  }
+}
+
+/* DARK MODE */
+
+.smarthome-dark .bk-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .bk-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .bk-input{
+  background:#1e293b;
+  color:white;
+}
+/* ================= SMART LOGIN CSS ================= */
+
+:root{
+  --lg-primary:#2563eb;
+  --lg-accent:#60a5fa;
+}
+
+/* ===== CONTAINER ===== */
+
+.lg-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:100vh;
+
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* ===== CARD ===== */
+
+.lg-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(16px);
+
+  padding:40px;
+  width:350px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.lg-card h2{
+  text-align:center;
+  font-weight:700;
+}
+
+/* ===== INPUT ===== */
+
+.lg-input{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  border:1px solid #e5e7eb;
+  padding:10px;
+
+  border-radius:10px;
+  background:white;
+
+  transition:0.3s;
+}
+
+.lg-input:focus-within{
+  border-color:var(--lg-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.lg-input input{
+  border:none;
+  outline:none;
+  width:100%;
+  background:transparent;
+}
+
+/* ===== EYE ICON ===== */
+
+.lg-eye{
+  cursor:pointer;
+  color:#6b7280;
+}
+
+/* ===== BUTTON ===== */
+
+.lg-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:12px;
+
+  border-radius:10px;
+
+  font-weight:600;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.lg-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* SECONDARY */
+
+.lg-btn.secondary{
+  background:#e5e7eb;
+  color:#111;
+}
+
+/* TEXT */
+
+.lg-text{
+  text-align:center;
+  font-size:14px;
+  color:#6b7280;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+  .lg-card{
+    width:90%;
+  }
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .lg-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .lg-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .lg-input{
+  background:#1e293b;
+  color:white;
+}
+/* ================= MY BOOKINGS CSS ================= */
+
+:root{
+  --mb-primary:#2563eb;
+  --mb-bg:#f8fafc;
+}
+
+/* ===== CONTAINER ===== */
+
+.mb-container{
+  padding:40px;
+  max-width:1100px;
+  margin:auto;
+
+  background:var(--mb-bg);
+}
+
+/* ===== TITLE ===== */
+
+.mb-title{
+  font-size:28px;
+  font-weight:700;
+  text-align:center;
+
+  margin-bottom:30px;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* ===== GRID ===== */
+
+.mb-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+}
+
+/* ===== CARD ===== */
+
+.mb-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(14px);
+
+  padding:20px;
+  border-radius:14px;
+
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+
+  transition:0.3s;
+}
+
+.mb-card:hover{
+  transform:translateY(-6px);
+}
+
+/* ===== HEADER ===== */
+
+.mb-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  margin-bottom:10px;
+}
+
+.mb-icon{
+  color:var(--mb-primary);
+  font-size:18px;
+}
+
+.mb-address{
+  font-weight:500;
+  color:#374151;
+}
+
+/* ===== STATUS ===== */
+
+.mb-status{
+  padding:6px 12px;
+  border-radius:20px;
+
+  font-size:13px;
+  font-weight:600;
+
+  display:inline-block;
+}
+
+/* COLORS */
+
+.mb-PENDING{
+  background:#fff4e5;
+  color:#f59e0b;
+}
+
+.mb-ACCEPTED{
+  background:#e0f2fe;
+  color:#0284c7;
+}
+
+.mb-COMPLETED{
+  background:#dcfce7;
+  color:#16a34a;
+}
+
+.mb-CANCELLED{
+  background:#fee2e2;
+  color:#dc2626;
+}
+
+/* EMPTY */
+
+.mb-empty{
+  text-align:center;
+  color:#6b7280;
+}
+
+/* ===== MOBILE ===== */
+
+@media(max-width:768px){
+  .mb-container{
+    padding:20px;
+  }
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .mb-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .mb-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .mb-address{
+  color:#e5e7eb;
+}
+
+/* ================= REGISTER PAGE CSS ================= */
+
+:root{
+  --rg-primary:#2563eb;
+  --rg-accent:#60a5fa;
+}
+
+/* ===== CONTAINER ===== */
+
+.rg-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:100vh;
+
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* ===== CARD ===== */
+
+.rg-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(16px);
+
+  padding:40px;
+  width:350px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.rg-card h2{
+  text-align:center;
+  font-weight:700;
+}
+
+/* ===== INPUT ===== */
+
+.rg-input{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  border:1px solid #e5e7eb;
+  padding:10px;
+
+  border-radius:10px;
+
+  background:white;
+  transition:0.3s;
+}
+
+.rg-input:focus-within{
+  border-color:var(--rg-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.rg-input input{
+  border:none;
+  outline:none;
+  width:100%;
+  background:transparent;
+}
+
+/* ===== BUTTON ===== */
+
+.rg-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:12px;
+
+  border-radius:10px;
+
+  font-weight:600;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.rg-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* ===== MOBILE ===== */
+
+@media(max-width:768px){
+  .rg-card{
+    width:90%;
+  }
+}
+
+/* ===== DARK MODE ===== */
+
+.smarthome-dark .rg-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .rg-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .rg-input{
+  background:#1e293b;
+  color:white;
+}
+
+/* ================= SIGNUP PAGE CSS ================= */
+
+:root{
+  --sg-primary:#2563eb;
+  --sg-accent:#60a5fa;
+}
+
+/* CONTAINER */
+
+.sg-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:100vh;
+
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* CARD */
+
+.sg-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(16px);
+
+  padding:40px;
+  width:380px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.sg-card h2{
+  text-align:center;
+  font-weight:700;
+}
+
+/* INPUT */
+
+.sg-input{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  border:1px solid #e5e7eb;
+  padding:10px;
+
+  border-radius:10px;
+
+  background:white;
+  transition:0.3s;
+}
+
+.sg-input:focus-within{
+  border-color:var(--sg-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.sg-input input,
+.sg-input select{
+  border:none;
+  outline:none;
+  width:100%;
+  background:transparent;
+}
+
+/* ROLE */
+
+.sg-role{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+/* BUTTON GROUP */
+
+.sg-btn-group{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+/* BUTTON */
+
+.sg-btn{
+  flex:1;
+
+  padding:12px;
+
+  border:none;
+  border-radius:10px;
+
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  font-weight:600;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.sg-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* SECONDARY */
+
+.sg-btn.secondary{
+  background:#10b981;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+  .sg-card{
+    width:90%;
+  }
+}
+
+/* DARK MODE */
+
+.smarthome-dark .sg-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .sg-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .sg-input{
+  background:#1e293b;
+  color:white;
+}
+
+/* ================= USER DASHBOARD CSS ================= */
+
+:root{
+  --ud-primary:#2563eb;
+}
+
+/* CONTAINER */
+
+.ud-container{
+  padding:30px;
+  max-width:1200px;
+  margin:auto;
+
+  background:#f8fafc;
+}
+
+/* TITLE */
+
+.ud-title{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+/* LOGOUT */
+
+.ud-logout{
+  background:#111;
+  color:white;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  margin-bottom:20px;
+}
+
+/* STATS */
+
+.ud-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.ud-stat{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* CARD */
+
+.ud-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+  margin-bottom:30px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* FORM */
+
+.ud-form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.ud-form input{
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+
+/* BUTTON */
+
+.ud-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+}
+
+/* TABLE */
+
+.ud-table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.ud-table th,
+.ud-table td{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+
+/* STATUS */
+
+.ud-PENDING{ color:#f59e0b; font-weight:600 }
+.ud-ACCEPTED{ color:#0284c7; font-weight:600 }
+.ud-COMPLETED{ color:#16a34a; font-weight:600 }
+.ud-CANCELLED{ color:#dc2626; font-weight:600 }
+
+/* CANCEL */
+
+.ud-cancel{
+  background:#ef4444;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+}
+
+/* DARK MODE */
+
+.smarthome-dark .ud-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .ud-card,
+.smarthome-dark .ud-stat{
+  background:#1e293b;
+  color:white;
+}
+/* ================= WORKER DASHBOARD CSS ================= */
+
+:root{
+  --wd-primary:#2563eb;
+}
+
+/* CONTAINER */
+
+.wd-container{
+  padding:30px;
+  max-width:1200px;
+  margin:auto;
+  background:#f8fafc;
+}
+
+/* TITLE */
+
+.wd-title{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+/* LOGOUT */
+
+.wd-logout{
+  background:#111;
+  color:white;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  margin-bottom:20px;
+}
+
+/* STATS */
+
+.wd-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.wd-stat{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* CARD */
+
+.wd-card{
+  background:white;
+  padding:25px;
+  border-radius:14px;
+  margin-bottom:30px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* FORM */
+
+.wd-form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.wd-form input{
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+
+/* BUTTON */
+
+.wd-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+}
+
+/* TABLE */
+
+.wd-table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.wd-table th,
+.wd-table td{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+
+/* STATUS */
+
+.wd-PENDING{ color:#f59e0b }
+.wd-ACCEPTED{ color:#0284c7 }
+.wd-COMPLETED{ color:#16a34a }
+.wd-REJECTED{ color:#dc2626 }
+
+/* BUTTONS */
+
+.wd-accept{
+  background:#22c55e;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-right:5px;
+}
+
+.wd-reject{
+  background:#ef4444;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+}
+
+.wd-complete{
+  background:#3b82f6;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+}
+
+/* DARK MODE */
+
+.smarthome-dark .wd-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .wd-card,
+.smarthome-dark .wd-stat{
+  background:#1e293b;
+  color:white;
+}
+
+/* ================= WORKER REGISTER CSS ================= */
+
+:root{
+  --wr-primary:#2563eb;
+  --wr-accent:#60a5fa;
+}
+
+/* CONTAINER */
+
+.wr-container{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  min-height:100vh;
+
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+/* CARD */
+
+.wr-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(16px);
+
+  padding:40px;
+  width:360px;
+
+  border-radius:16px;
+
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.wr-card h2{
+  text-align:center;
+  font-weight:700;
+}
+
+/* INPUT */
+
+.wr-input{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  border:1px solid #e5e7eb;
+  padding:10px;
+
+  border-radius:10px;
+
+  background:white;
+  transition:0.3s;
+}
+
+.wr-input:focus-within{
+  border-color:var(--wr-primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.wr-input input,
+.wr-input select{
+  border:none;
+  outline:none;
+  width:100%;
+  background:transparent;
+}
+
+/* BUTTON */
+
+.wr-btn{
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:white;
+
+  border:none;
+  padding:12px;
+
+  border-radius:10px;
+
+  font-weight:600;
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+.wr-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+  .wr-card{
+    width:90%;
+  }
+}
+
+/* DARK MODE */
+
+.smarthome-dark .wr-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .wr-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+.smarthome-dark .wr-input{
+  background:#1e293b;
+  color:white;
+}
+
+
+/* ================= WORKERS PAGE CSS ================= */
+
+:root{
+  --wk-primary:#2563eb;
+}
+
+/* CONTAINER */
+
+.wk-container{
+  padding:40px;
+  max-width:1200px;
+  margin:auto;
+  text-align:center;
+
+  background:#f8fafc;
+}
+
+/* TITLE */
+
+.wk-title{
+  font-size:30px;
+  font-weight:700;
+  margin-bottom:30px;
+
+  background:linear-gradient(90deg,#2563eb,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* GRID */
+
+.wk-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:25px;
+}
+
+/* CARD */
+
+.wk-card{
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(14px);
+
+  padding:25px;
+
+  border-radius:16px;
+
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+
+  transition:0.3s;
+}
+
+.wk-card:hover{
+  transform:translateY(-6px);
+}
+
+/* AVATAR */
+
+.wk-avatar{
+  font-size:40px;
+  color:var(--wk-primary);
+  margin-bottom:10px;
+}
+
+/* TEXT */
+
+.wk-service{
+  color:#374151;
+  margin-top:5px;
+}
+
+.wk-phone{
+  color:#6b7280;
+  font-size:14px;
+  margin-top:5px;
+}
+
+/* EMPTY */
+
+.wk-empty{
+  grid-column:1/-1;
+  color:#6b7280;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+  .wk-container{
+    padding:20px;
+  }
+}
+
+/* DARK MODE */
+
+.smarthome-dark .wk-container{
+  background:#0f172a;
+}
+
+.smarthome-dark .wk-card{
+  background:rgba(30,41,59,0.8);
+  color:white;
+}
+
+
+
+
+

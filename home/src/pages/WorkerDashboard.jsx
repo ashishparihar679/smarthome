@@ -13,6 +13,7 @@ const workerId = localStorage.getItem("user_id")
 
 const [profile,setProfile] = useState({})
 const [bookings,setBookings] = useState([])
+const [loading,setLoading] = useState(true)
 const [edit,setEdit] = useState(false)
 
 const [firstName,setFirstName] = useState("")
@@ -20,148 +21,185 @@ const [lastName,setLastName] = useState("")
 const [email,setEmail] = useState("")
 const [phone,setPhone] = useState("")
 
+/* LOAD DATA */
+
 useEffect(()=>{
-
-API.get(`user/profile/${workerId}/`)
-.then(res=>{
-setProfile(res.data)
-
-setFirstName(res.data.first_name)
-setLastName(res.data.last_name)
-setEmail(res.data.email)
-setPhone(res.data.phone)
-})
-
-API.get(`worker/bookings/?worker=${workerId}`)
-.then(res=>{
-setBookings(res.data)
-})
-
+loadData()
 },[])
 
+const loadData = async ()=>{
+try{
 
-const updateProfile = ()=>{
+  const [profileRes, bookingRes] = await Promise.all([
+    API.get(`user/profile/${workerId}/`),
+    API.get(`worker/bookings/?worker=${workerId}`)
+  ])
 
-API.put(`user/profile/${workerId}/`,{
+  const data = profileRes.data
 
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone
+  setProfile(data)
+  setFirstName(data.first_name || "")
+  setLastName(data.last_name || "")
+  setEmail(data.email || "")
+  setPhone(data.phone || "")
 
-})
-.then(()=>{
-toast.success("Profile Updated")
+  setBookings(bookingRes.data || [])
 
-setProfile({
-...profile,
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone
-})
-
-setEdit(false)
-})
+}catch{
+  toast.error("Failed to load data")
+}finally{
+  setLoading(false)
+}
 
 }
 
-const acceptBooking = (id)=>{
+/* UPDATE PROFILE */
 
-Swal.fire({
-title:"Accept Booking?",
-icon:"question",
-showCancelButton:true
-}).then((result)=>{
+const updateProfile = async ()=>{
+try{
+
+  await API.put(`user/profile/${workerId}/`,{
+    first_name:firstName,
+    last_name:lastName,
+    email,
+    phone
+  })
+
+  toast.success("Profile Updated")
+
+  setProfile(prev=>({
+    ...prev,
+    first_name:firstName,
+    last_name:lastName,
+    email,
+    phone
+  }))
+
+  setEdit(false)
+
+}catch{
+  toast.error("Update failed")
+}
+}
+
+/* ACCEPT */
+
+const acceptBooking = async (id)=>{
+
+const result = await Swal.fire({
+  title:"Accept Booking?",
+  icon:"question",
+  showCancelButton:true
+})
 
 if(result.isConfirmed){
 
-API.put(`booking/accept/${id}/`)
-.then(()=>{
+  try{
+    await API.put(`booking/accept/${id}/`)
 
-toast.success("Booking Accepted")
+    toast.success("Booking Accepted")
 
-setBookings(bookings.map(b=>
-b.id===id ? {...b,status:"ACCEPTED"} : b
-))
+    setBookings(prev =>
+      prev.map(b =>
+        b.id===id ? {...b,status:"ACCEPTED"} : b
+      )
+    )
 
-})
+  }catch{
+    toast.error("Failed")
+  }
 
 }
 
-})
-
 }
 
-const rejectBooking = (id)=>{
+/* REJECT */
 
-Swal.fire({
-title:"Reject Booking?",
-icon:"warning",
-showCancelButton:true
-}).then((result)=>{
+const rejectBooking = async (id)=>{
+
+const result = await Swal.fire({
+  title:"Reject Booking?",
+  icon:"warning",
+  showCancelButton:true
+})
 
 if(result.isConfirmed){
 
-API.put(`booking/reject/${id}/`)
-.then(()=>{
+  try{
+    await API.put(`booking/reject/${id}/`)
 
-toast.error("Booking Rejected")
+    toast.error("Booking Rejected")
 
-setBookings(bookings.map(b=>
-b.id===id ? {...b,status:"REJECTED"} : b
-))
+    setBookings(prev =>
+      prev.map(b =>
+        b.id===id ? {...b,status:"REJECTED"} : b
+      )
+    )
 
-})
+  }catch{
+    toast.error("Failed")
+  }
+
+}
 
 }
 
-})
+/* COMPLETE */
 
+const completeBooking = async (id)=>{
+try{
+
+  await API.put(`booking/complete/${id}/`)
+
+  toast.success("Service Completed")
+
+  setBookings(prev =>
+    prev.map(b =>
+      b.id===id ? {...b,status:"COMPLETED"} : b
+    )
+  )
+
+}catch{
+  toast.error("Failed")
+}
 }
 
-const completeBooking = (id)=>{
-
-API.put(`booking/complete/${id}/`)
-.then(()=>{
-
-toast.success("Service Completed")
-
-setBookings(bookings.map(b=>
-b.id===id ? {...b,status:"COMPLETED"} : b
-))
-
-})
-
-}
+/* LOGOUT */
 
 const logout = ()=>{
 localStorage.clear()
 window.location.href="/login"
 }
 
+/* LOADING */
+
+if(loading){
+return <p style={{textAlign:"center"}}>Loading...</p>
+}
+
+/* UI */
+
 return(
 
-<div className="worker-dashboard">
+<div className="wd-container">
 
-<h1>Worker Dashboard</h1>
+<h1 className="wd-title">Worker Dashboard</h1>
 
-<button className="logout-btn" onClick={logout}>
+<button className="wd-logout" onClick={logout}>
 Logout
 </button>
 
+{/* ===== STATS ===== */}
 
-{/* STATS */}
+<div className="wd-stats">
 
-<div className="worker-stats">
-
-<div className="stat-card">
+<div className="wd-stat">
 <FaUserTie/>
 <h3>{profile.first_name}</h3>
 <p>Worker Profile</p>
 </div>
 
-<div className="stat-card">
+<div className="wd-stat">
 <FaTools/>
 <h3>{bookings.length}</h3>
 <p>Total Requests</p>
@@ -169,14 +207,9 @@ Logout
 
 </div>
 
+{/* ===== PROFILE ===== */}
 
-{/* PROFILE */}
-
-<motion.div
-className="dashboard-card"
-initial={{opacity:0,y:30}}
-animate={{opacity:1,y:0}}
->
+<motion.div className="wd-card">
 
 <h2>Worker Profile</h2>
 
@@ -188,7 +221,7 @@ animate={{opacity:1,y:0}}
 <p><b>Email:</b> {profile.email}</p>
 <p><b>Phone:</b> {profile.phone}</p>
 
-<button onClick={()=>setEdit(true)}>
+<button className="wd-btn" onClick={()=>setEdit(true)}>
 Edit Profile
 </button>
 
@@ -196,29 +229,14 @@ Edit Profile
 
 ) : (
 
-<div className="edit-form">
+<div className="wd-form">
 
-<input
-value={firstName}
-onChange={(e)=>setFirstName(e.target.value)}
-/>
+<input value={firstName} onChange={e=>setFirstName(e.target.value)}/>
+<input value={lastName} onChange={e=>setLastName(e.target.value)}/>
+<input value={email} onChange={e=>setEmail(e.target.value)}/>
+<input value={phone} onChange={e=>setPhone(e.target.value)}/>
 
-<input
-value={lastName}
-onChange={(e)=>setLastName(e.target.value)}
-/>
-
-<input
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
-
-<input
-value={phone}
-onChange={(e)=>setPhone(e.target.value)}
-/>
-
-<button onClick={updateProfile}>
+<button className="wd-btn" onClick={updateProfile}>
 Save
 </button>
 
@@ -228,21 +246,21 @@ Save
 
 </motion.div>
 
+{/* ===== BOOKINGS ===== */}
 
-{/* BOOKINGS */}
-
-<motion.div
-className="dashboard-card"
-initial={{opacity:0,y:30}}
-animate={{opacity:1,y:0}}
->
+<motion.div className="wd-card">
 
 <h2>Service Requests</h2>
 
-<table className="dashboard-table">
+{bookings.length === 0 ? (
+
+<p>No requests</p>
+
+) : (
+
+<table className="wd-table">
 
 <thead>
-
 <tr>
 <th>ID</th>
 <th>Service</th>
@@ -251,12 +269,11 @@ animate={{opacity:1,y:0}}
 <th>Status</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody>
 
-{bookings.map((b)=>(
+{bookings.map(b=>(
 
 <tr key={b.id}>
 
@@ -265,41 +282,23 @@ animate={{opacity:1,y:0}}
 <td>{b.booking_date}</td>
 <td>{b.address}</td>
 
-<td className={`status-${b.status}`}>
+<td className={`wd-${b.status}`}>
 {b.status}
 </td>
 
 <td>
 
 {b.status==="PENDING" && (
-
 <>
-<button
-className="accept-btn"
-onClick={()=>acceptBooking(b.id)}
->
-Accept
-</button>
-
-<button
-className="reject-btn"
-onClick={()=>rejectBooking(b.id)}
->
-Reject
-</button>
+<button className="wd-accept" onClick={()=>acceptBooking(b.id)}>Accept</button>
+<button className="wd-reject" onClick={()=>rejectBooking(b.id)}>Reject</button>
 </>
-
 )}
 
 {b.status==="ACCEPTED" && (
-
-<button
-className="complete-btn"
-onClick={()=>completeBooking(b.id)}
->
+<button className="wd-complete" onClick={()=>completeBooking(b.id)}>
 Complete
 </button>
-
 )}
 
 </td>
@@ -311,6 +310,8 @@ Complete
 </tbody>
 
 </table>
+
+)}
 
 </motion.div>
 

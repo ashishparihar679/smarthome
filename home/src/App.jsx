@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "../src/App.css";
+import "../src/index.css";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -23,7 +23,6 @@ import About from "./pages/About";
 function App() {
   return (
     <BrowserRouter>
-
       <Navbar />
 
       {/* Toast Notifications */}
@@ -38,31 +37,28 @@ function App() {
 
       {/* Page Animation */}
       <motion.div
-        initial={{opacity:0,y:20}}
-        animate={{opacity:1,y:0}}
-        transition={{duration:0.5}}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
+        <Routes>
+          <Route path="/" element={<Services />} />
+          <Route path="/workers" element={<Workers />} />
+          <Route path="/booking" element={<Booking />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
 
-      <Routes>
-        <Route path="/" element={<Services />} />
-        <Route path="/workers" element={<Workers />} />
-        <Route path="/booking" element={<Booking />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/UserDashboard" element={<UserDashboard />} />
+          <Route path="/worker-dashboard" element={<WorkerDashboard />} />
 
-        <Route path="/UserDashboard" element={<UserDashboard />} />
-        <Route path="/worker-dashboard" element={<WorkerDashboard />} />
-
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/WorkerRegister" element={<WorkerRegister />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Signup" element={<Signup />} />
-        <Route path="/AdminUsers" element={<AdminUsers />} />
-      </Routes>
-
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/WorkerRegister" element={<WorkerRegister />} />
+          <Route path="/Login" element={<Login />} />
+          <Route path="/Signup" element={<Signup />} />
+          <Route path="/AdminUsers" element={<AdminUsers />} />
+        </Routes>
       </motion.div>
 
       <About />
-
     </BrowserRouter>
   );
 }

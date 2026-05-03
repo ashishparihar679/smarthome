@@ -4,11 +4,11 @@ import { motion } from "framer-motion"
 import { toast } from "react-toastify"
 import Swal from "sweetalert2"
 import { FaUsers } from "react-icons/fa"
-// import "./AdminUsers.css"
 
 function AdminUsers(){
 
 const [users,setUsers] = useState([])
+const [loading,setLoading] = useState(false)
 
 const [username,setUsername] = useState("")
 const [password,setPassword] = useState("")
@@ -21,260 +21,194 @@ const [role,setRole] = useState("USER")
 const [editId,setEditId] = useState(null)
 
 useEffect(()=>{
-loadUsers()
+  loadUsers()
 },[])
 
 /* LOAD USERS */
 
-const loadUsers = ()=>{
-
-API.get("users/")
-.then(res=>{
-setUsers(res.data)
-})
-.catch(err=>{
-toast.error("Failed to load users")
-})
-
+const loadUsers = async ()=>{
+try{
+  const res = await API.get("users/")
+  setUsers(res.data || [])
+}catch{
+  toast.error("Failed to load users")
+}
 }
 
 /* ADD USER */
 
-const addUser = ()=>{
+const addUser = async ()=>{
 
 if(!username || !password){
-toast.warning("Username and Password required")
-return
+  toast.warning("Username and Password required")
+  return
 }
 
-API.post("user/add/",{
+try{
+  setLoading(true)
 
-username:username,
-password:password,
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone,
-role:role
+  await API.post("user/add/",{
+    username,
+    password,
+    first_name:firstName,
+    last_name:lastName,
+    email,
+    phone,
+    role
+  })
 
-})
-.then(()=>{
+  toast.success("User Added")
+  clearForm()
+  loadUsers()
 
-toast.success("User Added")
-
-clearForm()
-loadUsers()
-
-})
-.catch(()=>{
-toast.error("Error adding user")
-})
+}catch{
+  toast.error("Error adding user")
+}finally{
+  setLoading(false)
+}
 
 }
 
-/* EDIT USER */
+/* EDIT */
 
 const editUser = (user)=>{
+  setEditId(user.id)
+  setUsername(user.username || "")
+  setFirstName(user.first_name || "")
+  setLastName(user.last_name || "")
+  setEmail(user.email || "")
+  setPhone(user.phone || "")
+  setRole(user.role || "USER")
+}
 
-setEditId(user.id)
+/* UPDATE */
 
-setUsername(user.username)
-setFirstName(user.first_name)
-setLastName(user.last_name)
-setEmail(user.email)
-setPhone(user.phone)
-setRole(user.role)
+const updateUser = async ()=>{
+
+try{
+  await API.put(`user/update/${editId}/`,{
+    username,
+    first_name:firstName,
+    last_name:lastName,
+    email,
+    phone,
+    role
+  })
+
+  toast.success("User Updated")
+  clearForm()
+  loadUsers()
+
+}catch{
+  toast.error("Update Failed")
+}
 
 }
 
-/* UPDATE USER */
+/* DELETE */
 
-const updateUser = ()=>{
+const deleteUser = async (id)=>{
 
-API.put(`user/update/${editId}/`,{
-
-username:username,
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone,
-role:role
-
+const result = await Swal.fire({
+  title:"Delete User?",
+  text:"This action cannot be undone",
+  icon:"warning",
+  showCancelButton:true,
+  confirmButtonColor:"#e74c3c"
 })
-.then(()=>{
-
-toast.success("User Updated")
-
-clearForm()
-loadUsers()
-
-})
-.catch(()=>{
-toast.error("Update Failed")
-})
-
-}
-
-/* DELETE USER */
-
-const deleteUser = (id)=>{
-
-Swal.fire({
-title:"Delete User?",
-text:"This action cannot be undone",
-icon:"warning",
-showCancelButton:true,
-confirmButtonColor:"#e74c3c"
-}).then((result)=>{
 
 if(result.isConfirmed){
-
-API.delete(`user/delete/${id}/`)
-.then(()=>{
-
-toast.success("User Deleted")
-loadUsers()
-
-})
+  try{
+    await API.delete(`user/delete/${id}/`)
+    toast.success("User Deleted")
+    loadUsers()
+  }catch{
+    toast.error("Delete Failed")
+  }
+}
 
 }
 
-})
-
-}
-
-/* CLEAR FORM */
+/* CLEAR */
 
 const clearForm = ()=>{
-
-setEditId(null)
-
-setUsername("")
-setPassword("")
-setFirstName("")
-setLastName("")
-setEmail("")
-setPhone("")
-setRole("USER")
-
+  setEditId(null)
+  setUsername("")
+  setPassword("")
+  setFirstName("")
+  setLastName("")
+  setEmail("")
+  setPhone("")
+  setRole("USER")
 }
 
 return(
 
-<div className="admin-users">
+<div className="au-container">
 
-<h1 className="admin-title">
+<h1 className="au-title">
 <FaUsers/> User Management
 </h1>
 
+{/* ===== STATS ===== */}
 
-{/* USER STATS */}
+<div className="au-stats">
 
-<div className="user-stats">
-
-<div className="stat-card">
+<div className="au-stat">
 <h3>{users.length}</h3>
 <p>Total Users</p>
 </div>
 
-<div className="stat-card">
+<div className="au-stat">
 <h3>{users.filter(u=>u.role==="USER").length}</h3>
 <p>Customers</p>
 </div>
 
-<div className="stat-card">
+<div className="au-stat">
 <h3>{users.filter(u=>u.role==="WORKER").length}</h3>
 <p>Workers</p>
 </div>
 
 </div>
 
-
-{/* ADD / EDIT FORM */}
+{/* ===== FORM ===== */}
 
 <motion.div
-className="card"
+className="au-card"
 initial={{opacity:0,y:40}}
 animate={{opacity:1,y:0}}
 >
 
 <h3>{editId ? "Edit User" : "Add User"}</h3>
 
-<input
-value={username}
-placeholder="Username"
-onChange={(e)=>setUsername(e.target.value)}
-/>
+<input value={username} placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/>
 
 {!editId && (
-
-<input
-type="password"
-value={password}
-placeholder="Password"
-onChange={(e)=>setPassword(e.target.value)}
-/>
-
+<input type="password" value={password} placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
 )}
 
-<input
-value={firstName}
-placeholder="First Name"
-onChange={(e)=>setFirstName(e.target.value)}
-/>
+<input value={firstName} placeholder="First Name" onChange={(e)=>setFirstName(e.target.value)}/>
+<input value={lastName} placeholder="Last Name" onChange={(e)=>setLastName(e.target.value)}/>
+<input value={email} placeholder="Email" onChange={(e)=>setEmail(e.target.value)}/>
+<input value={phone} placeholder="Phone" onChange={(e)=>setPhone(e.target.value)}/>
 
-<input
-value={lastName}
-placeholder="Last Name"
-onChange={(e)=>setLastName(e.target.value)}
-/>
-
-<input
-value={email}
-placeholder="Email"
-onChange={(e)=>setEmail(e.target.value)}
-/>
-
-<input
-value={phone}
-placeholder="Phone"
-onChange={(e)=>setPhone(e.target.value)}
-/>
-
-<select
-value={role}
-onChange={(e)=>setRole(e.target.value)}
->
-
+<select value={role} onChange={(e)=>setRole(e.target.value)}>
 <option value="USER">User</option>
 <option value="WORKER">Worker</option>
 <option value="ADMIN">Admin</option>
-
 </select>
 
-{editId ? (
-
-<button onClick={updateUser}>
-Update User
+<button onClick={editId ? updateUser : addUser}>
+{loading ? "Processing..." : editId ? "Update User" : "Add User"}
 </button>
-
-) : (
-
-<button onClick={addUser}>
-Add User
-</button>
-
-)}
 
 </motion.div>
 
+{/* ===== TABLE ===== */}
 
-{/* USERS TABLE */}
-
-<table className="table">
+<table className="au-table">
 
 <thead>
-
 <tr>
 <th>ID</th>
 <th>Username</th>
@@ -284,18 +218,16 @@ Add User
 <th>Role</th>
 <th>Action</th>
 </tr>
-
 </thead>
 
 <tbody>
 
-{users.map((u)=>(
-<motion.tr
-key={u.id}
-initial={{opacity:0}}
-animate={{opacity:1}}
->
+{users.length === 0 ? (
+<tr><td colSpan="7">No users available</td></tr>
+) : (
 
+users.map(u=>(
+<tr key={u.id}>
 <td>{u.id}</td>
 <td>{u.username}</td>
 <td>{u.first_name} {u.last_name}</td>
@@ -304,25 +236,13 @@ animate={{opacity:1}}
 <td>{u.role}</td>
 
 <td>
-
-<button
-className="edit-btn"
-onClick={()=>editUser(u)}
->
-Edit
-</button>
-
-<button
-className="delete-btn"
-onClick={()=>deleteUser(u.id)}
->
-Delete
-</button>
-
+<button className="au-edit" onClick={()=>editUser(u)}>Edit</button>
+<button className="au-delete" onClick={()=>deleteUser(u.id)}>Delete</button>
 </td>
+</tr>
+))
 
-</motion.tr>
-))}
+)}
 
 </tbody>
 

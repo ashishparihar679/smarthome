@@ -15,124 +15,122 @@ const [service,setService] = useState("")
 const [services,setServices] = useState([])
 const [loading,setLoading] = useState(false)
 
-// services load
+/* LOAD SERVICES */
+
 useEffect(()=>{
-
-API.get("services/")
-.then(res=>{
-setServices(res.data)
-})
-
+loadServices()
 },[])
 
-// submit worker
-const submitWorker = ()=>{
-
-if(!name || !phone || !service){
-toast.warning("Please fill all fields")
-return
+const loadServices = async ()=>{
+try{
+  const res = await API.get("services/")
+  setServices(res.data || [])
+}catch{
+  toast.error("Failed to load services")
+}
 }
 
-setLoading(true)
+/* SUBMIT */
 
-API.post("workers/",{
+const submitWorker = async ()=>{
 
-name:name,
-phone:phone,
-service:service,
-available:true,
-approved:false
+if(!name || !phone || !service){
+  toast.warning("Please fill all fields")
+  return
+}
 
-})
-.then(()=>{
+if(phone.length < 10){
+  toast.warning("Enter valid phone number")
+  return
+}
 
-toast.success("Worker Registration Successful")
+try{
+  setLoading(true)
 
-setName("")
-setPhone("")
-setService("")
-setLoading(false)
+  await API.post("workers/",{
+    name,
+    phone,
+    service,
+    available:true,
+    approved:false
+  })
 
-})
-.catch(err=>{
+  toast.success("Worker Registration Successful")
 
-toast.error("Registration Failed")
-setLoading(false)
+  setName("")
+  setPhone("")
+  setService("")
 
-})
+}catch{
+  toast.error("Registration Failed")
+}finally{
+  setLoading(false)
+}
 
 }
 
 return(
 
-<div className="worker-register-container">
+<div className="wr-container">
 
 <motion.div
-className="worker-register-card"
+className="wr-card"
 initial={{opacity:0,y:40}}
 animate={{opacity:1,y:0}}
 transition={{duration:0.5}}
 >
 
-<h2>Worker Registration</h2>
+<h2>Worker Registration 🛠️</h2>
 
-<div className="input-group">
+{/* NAME */}
 
+<div className="wr-input">
 <FaUserTie/>
-
 <input
 placeholder="Enter Name"
 value={name}
 onChange={(e)=>setName(e.target.value)}
 />
-
 </div>
 
-<div className="input-group">
+{/* PHONE */}
 
+<div className="wr-input">
 <FaPhone/>
-
 <input
 placeholder="Enter Phone"
 value={phone}
 onChange={(e)=>setPhone(e.target.value)}
 />
-
 </div>
 
+{/* SERVICE */}
 
-<div className="input-group">
-
+<div className="wr-input">
 <FaTools/>
-
 <select
 value={service}
 onChange={(e)=>setService(e.target.value)}
 >
-
 <option value="">Select Service</option>
 
-{services.map(service=>(
-
-<option key={service.id} value={service.id}>
-{service.name}
+{services.map(s=>(
+<option key={s.id} value={s.id}>
+{s.name}
 </option>
-
 ))}
 
 </select>
-
 </div>
 
+{/* BUTTON */}
 
 <button
-className="worker-register-btn"
+className="wr-btn"
 onClick={submitWorker}
 disabled={loading}
 >
-
 {loading ? "Registering..." : "Register Worker"}
-
 </button>
 
 </motion.div>

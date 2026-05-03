@@ -9,13 +9,12 @@ import {
 BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
 
-// import "./AdminDashboard.css";
-
 function AdminDashboard(){
 
 const [services,setServices] = useState([])
 const [workers,setWorkers] = useState([])
 const [serviceName,setServiceName] = useState("")
+const [loading,setLoading] = useState(false)
 
 const [admin,setAdmin] = useState({})
 const [edit,setEdit] = useState(false)
@@ -28,135 +27,141 @@ const [phone,setPhone] = useState("")
 const adminId = localStorage.getItem("user_id")
 
 useEffect(()=>{
-loadServices()
-loadWorkers()
-loadAdmin()
+  loadServices()
+  loadWorkers()
+  loadAdmin()
 },[])
+
+/* ================= LOAD ADMIN ================= */
 
 const loadAdmin = async ()=>{
 try{
-const res = await API.get(`user/profile/${adminId}/`)
-setAdmin(res.data)
+  const res = await API.get(`user/profile/${adminId}/`)
+  const data = res.data
 
-setFirstName(res.data.first_name)
-setLastName(res.data.last_name)
-setEmail(res.data.email)
-setPhone(res.data.phone)
+  setAdmin(data)
+  setFirstName(data.first_name || "")
+  setLastName(data.last_name || "")
+  setEmail(data.email || "")
+  setPhone(data.phone || "")
 
 }catch(err){
-console.log(err)
+  toast.error("Failed to load profile")
 }
 }
+
+/* ================= LOAD SERVICES ================= */
 
 const loadServices = async ()=>{
 try{
-const res = await API.get("services/")
-setServices(res.data)
-}catch(err){
-console.log(err)
+  const res = await API.get("services/")
+  setServices(res.data || [])
+}catch{
+  toast.error("Failed to load services")
 }
 }
+
+/* ================= LOAD WORKERS ================= */
 
 const loadWorkers = async ()=>{
 try{
-const res = await API.get("workers/")
-setWorkers(res.data)
-}catch(err){
-console.log(err)
+  const res = await API.get("workers/")
+  setWorkers(res.data || [])
+}catch{
+  toast.error("Failed to load workers")
 }
 }
 
-/* ADD SERVICE */
+/* ================= ADD SERVICE ================= */
 
 const addService = async ()=>{
 
 if(!serviceName.trim()){
-toast.warning("Enter service name")
-return
+  toast.warning("Enter service name")
+  return
 }
 
 try{
+  setLoading(true)
 
-await API.post("services/",{name:serviceName})
+  await API.post("services/",{name:serviceName})
 
-toast.success("Service Added")
+  toast.success("Service Added")
 
-setServiceName("")
-loadServices()
+  setServiceName("")
+  loadServices()
 
-}catch(err){
-toast.error("Failed")
+}catch{
+  toast.error("Failed to add service")
+}finally{
+  setLoading(false)
 }
 }
 
-/* DELETE SERVICE */
+/* ================= DELETE ================= */
 
 const deleteService = async (id)=>{
 
-Swal.fire({
-title:"Delete Service?",
-text:"This action cannot be undone",
-icon:"warning",
-showCancelButton:true,
-confirmButtonColor:"#e74c3c"
-}).then(async(result)=>{
+const result = await Swal.fire({
+  title:"Delete Service?",
+  text:"This action cannot be undone",
+  icon:"warning",
+  showCancelButton:true,
+  confirmButtonColor:"#e74c3c"
+})
 
 if(result.isConfirmed){
 
-await API.delete(`services/delete/${id}/`)
-toast.success("Service Deleted")
-loadServices()
+  try{
+    await API.delete(`services/delete/${id}/`)
+    toast.success("Service Deleted")
+    loadServices()
+  }catch{
+    toast.error("Delete failed")
+  }
 
 }
-
-})
-
 }
 
-/* APPROVE WORKER */
+/* ================= APPROVE WORKER ================= */
 
 const approveWorker = async (id)=>{
 
 try{
-
-await API.put(`worker/approve/${id}/`)
-
-toast.success("Worker Approved")
-
-loadWorkers()
-
-}catch(err){
-toast.error("Error approving worker")
+  await API.put(`worker/approve/${id}/`)
+  toast.success("Worker Approved")
+  loadWorkers()
+}catch{
+  toast.error("Approval failed")
+}
 }
 
-}
-
-/* UPDATE ADMIN */
+/* ================= UPDATE ADMIN ================= */
 
 const updateAdmin = async ()=>{
 
+if(!firstName || !email){
+  toast.warning("Name & Email required")
+  return
+}
+
 try{
+  await API.put(`user/profile/${adminId}/`,{
+    first_name:firstName,
+    last_name:lastName,
+    email:email,
+    phone:phone
+  })
 
-await API.put(`user/profile/${adminId}/`,{
+  toast.success("Profile Updated")
+  setEdit(false)
 
-first_name:firstName,
-last_name:lastName,
-email:email,
-phone:phone
-
-})
-
-toast.success("Profile Updated")
-
-setEdit(false)
-
-}catch(err){
-toast.error("Update Failed")
+}catch{
+  toast.error("Update failed")
+}
 }
 
-}
-
-/* CHART DATA */
+/* ================= CHART ================= */
 
 const chartData = [
 {name:"Services",value:services.length},
@@ -169,8 +174,7 @@ return(
 
 <h1 className="admin-title">Admin Dashboard</h1>
 
-
-{/* ANALYTICS */}
+{/* ===== ANALYTICS ===== */}
 
 <div className="analytics-grid">
 
@@ -188,33 +192,23 @@ return(
 
 </div>
 
-
-{/* CHART */}
+{/* ===== CHART ===== */}
 
 <div className="chart-card">
-
 <h3>Platform Overview</h3>
 
 <ResponsiveContainer width="100%" height={250}>
-
 <BarChart data={chartData}>
-
 <XAxis dataKey="name"/>
-
 <YAxis/>
-
 <Tooltip/>
-
-<Bar dataKey="value" fill="#4a90e2"/>
-
+<Bar dataKey="value" fill="#2563eb"/>
 </BarChart>
-
 </ResponsiveContainer>
 
 </div>
 
-
-{/* PROFILE */}
+{/* ===== PROFILE ===== */}
 
 <motion.div
 className="admin-card"
@@ -227,43 +221,22 @@ animate={{opacity:1,y:0}}
 {!edit ? (
 
 <div>
-
 <p><b>Name:</b> {admin.first_name} {admin.last_name}</p>
 <p><b>Email:</b> {admin.email}</p>
 
-<button onClick={()=>setEdit(true)}>
-Edit Profile
-</button>
-
+<button onClick={()=>setEdit(true)}>Edit Profile</button>
 </div>
 
 ) : (
 
 <div>
 
-<input
-value={firstName}
-onChange={(e)=>setFirstName(e.target.value)}
-/>
+<input value={firstName} onChange={(e)=>setFirstName(e.target.value)} placeholder="First Name"/>
+<input value={lastName} onChange={(e)=>setLastName(e.target.value)} placeholder="Last Name"/>
+<input value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="Email"/>
+<input value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="Phone"/>
 
-<input
-value={lastName}
-onChange={(e)=>setLastName(e.target.value)}
-/>
-
-<input
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
-
-<input
-value={phone}
-onChange={(e)=>setPhone(e.target.value)}
-/>
-
-<button onClick={updateAdmin}>
-Save
-</button>
+<button onClick={updateAdmin}>Save</button>
 
 </div>
 
@@ -271,8 +244,7 @@ Save
 
 </motion.div>
 
-
-{/* SERVICES */}
+{/* ===== SERVICES ===== */}
 
 <div className="admin-card">
 
@@ -287,17 +259,20 @@ onChange={(e)=>setServiceName(e.target.value)}
 />
 
 <button onClick={addService}>
-Add
+{loading ? "Adding..." : "Add"}
 </button>
 
 </div>
+
+{services.length === 0 ? (
+<p>No services available</p>
+) : (
 
 <div className="services-grid">
 
 {services.map(s=>(
 
 <div className="service-card" key={s.id}>
-
 <h4>{s.name}</h4>
 
 <button
@@ -313,14 +288,19 @@ Delete
 
 </div>
 
+)}
+
 </div>
 
-
-{/* WORKERS */}
+{/* ===== WORKERS ===== */}
 
 <div className="admin-card">
 
 <h3>Workers</h3>
+
+{workers.length === 0 ? (
+<p>No workers available</p>
+) : (
 
 <div className="workers-grid">
 
@@ -329,24 +309,19 @@ Delete
 <div className="worker-card" key={w.id}>
 
 <h4>{w.name}</h4>
-
 <p>{w.phone}</p>
 
 <p className={w.approved ? "approved":"pending"}>
-
 {w.approved ? "Approved":"Pending"}
-
 </p>
 
 {!w.approved && (
-
 <button
 className="approve-btn"
 onClick={()=>approveWorker(w.id)}
 >
 Approve
 </button>
-
 )}
 
 </div>
@@ -354,6 +329,8 @@ Approve
 ))}
 
 </div>
+
+)}
 
 </div>
 

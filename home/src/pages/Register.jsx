@@ -3,103 +3,109 @@ import API from "../api/api"
 import { toast } from "react-toastify"
 import { motion } from "framer-motion"
 import { FaUser, FaLock, FaPhone } from "react-icons/fa"
+import { ClipLoader } from "react-spinners"
 
 function Register(){
 
 const [username,setUsername] = useState("")
 const [password,setPassword] = useState("")
 const [phone,setPhone] = useState("")
+const [loading,setLoading] = useState(false)
 
-const submitUser = ()=>{
+/* SUBMIT */
+
+const submitUser = async ()=>{
 
 if(!username || !password || !phone){
-toast.warning("Please fill all fields")
-return
+  toast.warning("Please fill all fields")
+  return
 }
 
-API.post("register/",{
+// simple phone validation
+if(phone.length < 10){
+  toast.warning("Enter valid phone number")
+  return
+}
 
-username:username,
-password:password,
-phone:phone,
-role:"USER"
+try{
+  setLoading(true)
 
-})
+  await API.post("register/",{
+    username,
+    password,
+    phone,
+    role:"USER"
+  })
 
-.then(()=>{
-toast.success("User Created Successfully")
+  toast.success("User Created Successfully")
 
-setUsername("")
-setPassword("")
-setPhone("")
-})
+  setUsername("")
+  setPassword("")
+  setPhone("")
 
-.catch(()=>{
-toast.error("Registration Failed")
-})
+}catch{
+  toast.error("Registration Failed")
+}finally{
+  setLoading(false)
+}
 
 }
 
 return(
 
-<div className="register-container">
+<div className="rg-container">
 
 <motion.div
-className="register-card"
+className="rg-card"
 initial={{opacity:0,y:40}}
 animate={{opacity:1,y:0}}
 transition={{duration:0.5}}
 >
 
-<h2>Create Account</h2>
+<h2>Create Account 🚀</h2>
 
-<div className="input-group">
+{/* USERNAME */}
 
+<div className="rg-input">
 <FaUser/>
-
 <input
 placeholder="Username"
 value={username}
 onChange={e=>setUsername(e.target.value)}
 />
-
 </div>
 
+{/* PASSWORD */}
 
-<div className="input-group">
-
+<div className="rg-input">
 <FaLock/>
-
 <input
 type="password"
 placeholder="Password"
 value={password}
 onChange={e=>setPassword(e.target.value)}
 />
-
 </div>
 
+{/* PHONE */}
 
-<div className="input-group">
-
+<div className="rg-input">
 <FaPhone/>
-
 <input
-placeholder="Phone"
+placeholder="Phone Number"
 value={phone}
 onChange={e=>setPhone(e.target.value)}
 />
-
 </div>
 
+{/* BUTTON */}
 
 <button
-className="register-btn"
+className="rg-btn"
 onClick={submitUser}
+disabled={loading}
 >
-
-Register
-
+{loading ? <ClipLoader size={20} color="#fff"/> : "Register"}
 </button>
 
 </motion.div>

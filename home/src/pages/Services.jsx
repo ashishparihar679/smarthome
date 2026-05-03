@@ -20,20 +20,17 @@ function Service() {
     loadServices();
   }, []);
 
-  // 🔥 improved API call
   const loadServices = async () => {
     try {
       const res = await API.get("services/");
-      setServices(res.data);
+      setServices(res.data || []);
     } catch (error) {
-      console.error(error);
       toast.error("Failed to load services");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔐 improved booking check
   const handleBook = (serviceId) => {
     const role = localStorage.getItem("role");
 
@@ -46,17 +43,32 @@ function Service() {
     navigate("/booking", { state: { serviceId } });
   };
 
-  return (
-    <div className="home-container">
+  // animation container
+  const container = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  };
 
-      {/* HERO SECTION */}
-      <div className="hero-section">
-        <div className="hero-overlay">
+  const item = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  return (
+    <div className="sm-home">
+
+      {/* HERO */}
+      <div className="sm-hero">
+        <div className="sm-hero-overlay">
           <h1>Professional Home Services</h1>
           <p>Book trusted electricians, plumbers, cleaners and more</p>
 
           <button
-            className="hero-btn"
+            className="sm-btn-primary"
             onClick={() => navigate("/services")}
           >
             Explore Services
@@ -65,35 +77,30 @@ function Service() {
       </div>
 
       {/* SERVICES */}
-      <h2 className="section-title">Our Services</h2>
+      <h2 className="sm-title">Our Services</h2>
 
-      <div className="services-grid">
+      <motion.div
+        className="sm-grid"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
 
         {loading ? (
-
           Array(6).fill().map((_, i) => (
-            <Skeleton key={i} height={160} />
+            <Skeleton key={i} height={180} borderRadius={12} />
           ))
-
         ) : services.length === 0 ? (
-
-          <p style={{ textAlign: "center" }}>
-            No services available
-          </p>
-
+          <p className="sm-empty">No services available</p>
         ) : (
-
           services.map(service => (
-
             <motion.div
               key={service.id}
-              className="service-card"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              className="sm-card"
+              variants={item}
               whileHover={{ scale: 1.05 }}
             >
-              <div className="service-icon">
+              <div className="sm-icon">
                 <FaTools />
               </div>
 
@@ -104,78 +111,52 @@ function Service() {
               </p>
 
               <button
-                className="book-btn"
+                className="sm-btn-primary"
                 onClick={() => handleBook(service.id)}
               >
                 Book Now
               </button>
 
             </motion.div>
-
           ))
-
         )}
 
-      </div>
+      </motion.div>
 
-      {/* WHY CHOOSE US */}
-      <div className="why-section">
+      {/* WHY */}
+      <div className="sm-why">
         <h2>Why Choose Us</h2>
 
-        <div className="why-grid">
+        <div className="sm-why-grid">
 
-          <div className="why-card">
+          <div className="sm-why-card">
             <FaShieldAlt />
             <h3>Verified Workers</h3>
-            <p>All professionals are background verified</p>
+            <p>All professionals are verified</p>
           </div>
 
-          <div className="why-card">
+          <div className="sm-why-card">
             <FaClock />
             <h3>Fast Service</h3>
-            <p>Book services within minutes</p>
+            <p>Quick booking system</p>
           </div>
 
-          <div className="why-card">
+          <div className="sm-why-card">
             <FaStar />
             <h3>Top Rated</h3>
-            <p>Highly rated by customers</p>
-          </div>
-
-        </div>
-      </div>
-
-      {/* REVIEWS */}
-      <div className="review-section">
-        <h2>Customer Reviews</h2>
-
-        <div className="review-grid">
-
-          <div className="review-card">
-            <p>"Very fast electrician service. Highly recommended."</p>
-            <h4>Rahul Sharma</h4>
-          </div>
-
-          <div className="review-card">
-            <p>"Cleaning team was professional and polite."</p>
-            <h4>Anjali Verma</h4>
-          </div>
-
-          <div className="review-card">
-            <p>"Best home repair service I have used."</p>
-            <h4>Amit Singh</h4>
+            <p>Highly rated services</p>
           </div>
 
         </div>
       </div>
 
       {/* CTA */}
-      <div className="cta-section">
+      <div className="sm-cta">
         <h2>Need Help With Your Home?</h2>
         <p>Book trusted professionals today</p>
 
         <button
-          className="cta-btn"
+          className="sm-btn-primary"
           onClick={() => navigate("/services")}
         >
           Book Service
