@@ -2,24 +2,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from django.contrib.auth import authenticate , get_user_model
+from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
 
 from .models import Service, Worker, Booking,User
 from .serializers import ServiceSerializer, WorkerSerializer, BookingSerializer, UserSerializer
 
-# from django.contrib.auth import 
-
-User = get_user_model()
-
-def create_admin():
-    if not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(
-            username="admin",
-            email="admin@gmail.com",
-            password="admin123"
-        )
-create_admin()
 
 # -------------------------
 # SERVICES LIST
