@@ -5,17 +5,16 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # ======================
 # SECURITY
 # ======================
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
-DEBUG = True
+# ❗ Render पर DEBUG हमेशा False होना चाहिए
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
-
 
 # ======================
 # APPS
@@ -34,7 +33,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 ]
-
 
 # ======================
 # MIDDLEWARE
@@ -55,37 +53,35 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 # ======================
 # URL / WSGI
 # ======================
 
 ROOT_URLCONF = 'homeservice.urls'
-
 WSGI_APPLICATION = 'homeservice.wsgi.application'
 
-
 # ======================
-# DATABASE (IMPORTANT)
+# DATABASE (FIXED)
 # ======================
 
-if DEBUG:
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # local dev only
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:
-    DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
-
-# 👉 Render automatically DATABASE_URL set karega
-
 
 # ======================
 # PASSWORD VALIDATION
@@ -98,7 +94,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # ======================
 # INTERNATIONALIZATION
 # ======================
@@ -108,9 +103,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
 # ======================
-# STATIC FILES (IMPORTANT FOR RENDER)
+# STATIC FILES
 # ======================
 
 STATIC_URL = '/static/'
@@ -118,25 +112,21 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
 # ======================
-# CORS (Frontend connect)
+# CORS
 # ======================
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# optional (better security)
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
-
 
 # ======================
 # AUTH USER MODEL
 # ======================
 
 AUTH_USER_MODEL = 'subapp.User'
-
 
 # ======================
 # JWT
@@ -152,10 +142,15 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+# ======================
+# TEMPLATES
+# ======================
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],   # अगर custom templates नहीं हैं तो empty रहने दो
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
