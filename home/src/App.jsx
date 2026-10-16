@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import "../src/index.css";
+import { useEffect } from "react";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,10 +20,24 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import AdminUsers from "./pages/AdminUsers";
 import About from "./pages/About";
+import Footer from "./components/Footer";
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [pathname, hash]);
+
+  return null;
+}
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Navbar />
 
       {/* Toast Notifications */}
@@ -59,6 +74,7 @@ function App() {
       </motion.div>
 
       <About />
+      <Footer />
     </BrowserRouter>
   );
 }

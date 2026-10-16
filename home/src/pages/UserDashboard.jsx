@@ -180,10 +180,10 @@ Edit Profile
 
 <div className="ud-form">
 
-<input value={firstName} onChange={e=>setFirstName(e.target.value)}/>
-<input value={lastName} onChange={e=>setLastName(e.target.value)}/>
-<input value={email} onChange={e=>setEmail(e.target.value)}/>
-<input value={phone} onChange={e=>setPhone(e.target.value)}/>
+<input value={firstName} placeholder="First name" onChange={e=>setFirstName(e.target.value)}/>
+<input value={lastName} placeholder="Last name" onChange={e=>setLastName(e.target.value)}/>
+<input value={email} placeholder="Email address" onChange={e=>setEmail(e.target.value)}/>
+<input value={phone} placeholder="Phone number" onChange={e=>setPhone(e.target.value)}/>
 
 <button className="ud-btn" onClick={updateProfile}>
 Save

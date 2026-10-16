@@ -9,7 +9,11 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://smarthome-d21v.onrender.com/",
+  baseURL: import.meta.env.VITE_API_BASE_URL || (
+    import.meta.env.DEV
+      ? "http://127.0.0.1:8000/"
+      : "https://smarthome-d21v.onrender.com/"
+  ),
 });
 
 export default API;

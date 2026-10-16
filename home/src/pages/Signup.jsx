@@ -4,6 +4,7 @@ import API from "../api/api";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import FormSelect from "../components/FormSelect";
 
 import {
 FaUser,
@@ -141,15 +142,22 @@ transition={{duration:0.5}}
 <input value={phone} placeholder="Phone" onChange={(e)=>setPhone(e.target.value)}/>
 </div>
 
-<select
-className="sg-role"
-value={role}
-onChange={(e)=>setRole(e.target.value)}
->
-<option value="USER">User</option>
-<option value="WORKER">Worker</option>
-<option value="ADMIN">Admin</option>
-</select>
+<div className="sg-role-field">
+<span className="sg-role-icon"><FaUser aria-hidden="true" /></span>
+<FormSelect
+  id="signup-role"
+  className="sg-role-select"
+  name="account type"
+  value={role}
+  onChange={(e)=>setRole(e.target.value)}
+  placeholder="Select account type"
+  options={[
+    { value: "USER", label: "User" },
+    { value: "WORKER", label: "Worker" },
+    { value: "ADMIN", label: "Admin" },
+  ]}
+/>
+</div>
 
 {role === "WORKER" && (
 
@@ -157,19 +165,16 @@ onChange={(e)=>setRole(e.target.value)}
 
 <FaTools/>
 
-<select
-value={serviceId}
-onChange={(e)=>setServiceId(e.target.value)}
->
-<option value="">Select Service</option>
-
-{services.map(service=>(
-<option key={service.id} value={service.id}>
-{service.name}
-</option>
-))}
-
-</select>
+<FormSelect
+  id="signup-service"
+  name="service"
+  value={serviceId}
+  onChange={(e)=>setServiceId(e.target.value)}
+  placeholder="Select Service"
+  options={services.map((service)=>(
+    { value: String(service.id), label: service.name }
+  ))}
+/>
 
 </div>
 

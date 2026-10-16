@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { FaHome, FaUser, FaSignOutAlt, FaMoon } from "react-icons/fa"
+import { FaHome, FaUser, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa"
 
 function Navbar(){
 
@@ -69,6 +69,7 @@ return(
 
 <motion.nav
 className="sm-navbar"
+aria-label="Main navigation"
 variants={navVariants}
 initial="hidden"
 animate="visible"
@@ -80,12 +81,15 @@ animate="visible"
 🏠 SmartHome
 </div>
 
-<div
+<button
+type="button"
 className="sm-menu-icon"
+aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+aria-expanded={menuOpen}
 onClick={()=>setMenuOpen(!menuOpen)}
 >
-☰
-</div>
+{menuOpen ? "×" : "☰"}
+</button>
 
 <ul className={`sm-links ${menuOpen ? "open" : ""}`}>
 
@@ -150,17 +154,27 @@ Book Service
 {/* THEME */}
 <li>
 <button
+type="button"
 className="sm-theme-btn"
+aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+title={dark ? "Switch to light mode" : "Switch to dark mode"}
 onClick={()=>setDark(!dark)}
 >
-<FaMoon/>
+<motion.span
+key={dark ? "sun" : "moon"}
+initial={{ opacity: 0, rotate: -35, scale: 0.7 }}
+animate={{ opacity: 1, rotate: 0, scale: 1 }}
+transition={{ duration: 0.22 }}
+>
+{dark ? <FaSun/> : <FaMoon/>}
+</motion.span>
 </button>
 </li>
 
 {/* LOGOUT */}
 {role && (
 <li>
-<button className="sm-logout-btn" onClick={logout}>
+<button type="button" className="sm-logout-btn" onClick={logout}>
 <FaSignOutAlt/> Logout
 </button>
 </li>
