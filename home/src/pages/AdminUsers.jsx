@@ -24,6 +24,7 @@ const [form,setForm] = useState({
   role:"USER",
   serviceId:""
 })
+const [newPassword,setNewPassword] = useState("")
 
 /* FILTER + SEARCH */
 const [search,setSearch] = useState("")
@@ -76,6 +77,11 @@ if(!editId && !form.password){
   return
 }
 
+if(editId && newPassword && newPassword.length < 8){
+  toast.warning("Password must be at least 8 characters")
+  return
+}
+
 if(form.role === "WORKER" && !form.serviceId){
   toast.warning("Select service")
   return
@@ -92,7 +98,8 @@ try{
     email:form.email,
     phone:form.phone,
     role:form.role,
-    service: form.role === "WORKER" ? form.serviceId : null
+    service: form.role === "WORKER" ? form.serviceId : null,
+    ...(editId && newPassword ? {password:newPassword} : {})
   }
 
   if(editId){
@@ -127,6 +134,7 @@ const editUser = (u)=>{
     role:u.role || "USER",
     serviceId:u.service || ""
   })
+  setNewPassword("")
 
   window.scrollTo({top:0,behavior:"smooth"}) // 👈 FORM TOP PE
 }
@@ -149,6 +157,7 @@ if(result.isConfirmed){
 /* CLEAR */
 const clearForm = ()=>{
   setEditId(null)
+  setNewPassword("")
   setForm({
     username:"",
     password:"",
@@ -219,6 +228,16 @@ return(
 <option key={s.id} value={s.id}>{s.name}</option>
 ))}
 </select>
+)}
+
+{editId && (
+<input
+  type="password"
+  autoComplete="new-password"
+  value={newPassword}
+  onChange={(e)=>setNewPassword(e.target.value)}
+  placeholder="Current password is hidden — enter a new one to change it"
+/>
 )}
 
 <button onClick={submitUser}>

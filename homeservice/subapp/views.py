@@ -5,7 +5,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
 
-from .models import Service, Worker, Booking,User
+from .models import Service, City, Worker, Booking,User
 from .serializers import ServiceSerializer, WorkerSerializer, BookingSerializer, UserSerializer
 
 
@@ -38,6 +38,25 @@ def delete_service(request,id):
     service.delete()
 
     return Response({"message":"Service Deleted"})
+
+@api_view(['GET', 'POST'])
+def cities(request):
+    if request.method == 'GET':
+        return Response([{"id": city.id, "name": city.name} for city in City.objects.order_by('name')])
+
+    name = request.data.get('name', '').strip()
+    if not name:
+        return Response({"name": ["Enter a city name."]}, status=status.HTTP_400_BAD_REQUEST)
+    if City.objects.filter(name__iexact=name).exists():
+        return Response({"name": ["This city already exists."]}, status=status.HTTP_400_BAD_REQUEST)
+    city = City.objects.create(name=name)
+    return Response({"id": city.id, "name": city.name}, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+def delete_city(request, id):
+    city = get_object_or_404(City, id=id)
+    city.delete()
+    return Response({"message": "City Deleted"})
 # WORKERS LIST (FILTER BY SERVICE)
 # -------------------------
 @api_view(['GET','POST'])
@@ -199,6 +218,13 @@ def approve_worker(request,id):
 
     return Response({"message":"Worker Approved"})
 
+@api_view(['PUT'])
+def toggle_worker_availability(request, id):
+    worker = get_object_or_404(Worker, id=id)
+    worker.available = not worker.available
+    worker.save(update_fields=['available'])
+    return Response({"available": worker.available})
+
 @api_view(['GET'])
 def user_profile(request, id):
 
@@ -257,17 +283,26 @@ def cancel_booking(request,id):
 # Get All Users
 @api_view(['GET'])
 def all_users(request):
-
     users = User.objects.all().values(
         "id","username","first_name","last_name","email","phone","role"
     )
-
-    return Response(users)
+    data = list(users)
+    workers_by_phone = {worker.phone: worker for worker in Worker.objects.select_related('service').all()}
+    for user in data:
+        worker = workers_by_phone.get(user['phone'])
+        user['service'] = worker.service_id if worker else None
+    return Response(data)
 
 
 # Add User
 @api_view(['POST'])
 def add_user(request):
+
+    role = request.data.get("role")
+    service_id = request.data.get("service")
+    service = get_object_or_404(Service, id=service_id) if role == "WORKER" and service_id else None
+    if role == "WORKER" and not service_id:
+        return Response({"error": "Service is required for workers"}, status=400)
 
     user = User.objects.create_user(
         username=request.data.get("username"),
@@ -276,8 +311,14 @@ def add_user(request):
         last_name=request.data.get("last_name"),
         email=request.data.get("email"),
         phone=request.data.get("phone"),
-        role=request.data.get("role")
+        role=role
     )
+
+    if role == "WORKER":
+        Worker.objects.update_or_create(
+            phone=user.phone,
+            defaults={"name": user.first_name or user.username, "service": service}
+        )
 
     return Response({"message":"User Created"})
 
@@ -288,13 +329,30 @@ def update_user(request,id):
 
     user = get_object_or_404(User,id=id)
 
+    role = request.data.get("role", user.role)
+    service_id = request.data.get("service")
+    service = get_object_or_404(Service, id=service_id) if role == "WORKER" and service_id else None
+    if role == "WORKER" and not service_id:
+        return Response({"error": "Service is required for workers"}, status=400)
+
     user.first_name = request.data.get("first_name",user.first_name)
     user.last_name = request.data.get("last_name",user.last_name)
     user.email = request.data.get("email",user.email)
     user.phone = request.data.get("phone",user.phone)
-    user.role = request.data.get("role",user.role)
+    user.role = role
+    new_password = request.data.get("password")
+    if new_password:
+        if len(new_password) < 8:
+            return Response({"error": "Password must be at least 8 characters"}, status=400)
+        user.set_password(new_password)
 
     user.save()
+
+    if role == "WORKER":
+        Worker.objects.update_or_create(
+            phone=user.phone,
+            defaults={"name": user.first_name or user.username, "service": service}
+        )
 
     return Response({"message":"User Updated"})
 

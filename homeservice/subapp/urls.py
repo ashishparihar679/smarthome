@@ -6,6 +6,8 @@ urlpatterns = [
 
     path('services/', views.services),
     path('services/delete/<int:id>/', views.delete_service),
+    path('cities/', views.cities),
+    path('cities/delete/<int:id>/', views.delete_city),
 
     path('workers/', views.workers),
 
@@ -23,6 +25,7 @@ urlpatterns = [
     path('register/', views.register),
     path('login/', views.login),
     path('worker/approve/<int:id>/', views.approve_worker),
+    path('worker/availability/<int:id>/', views.toggle_worker_availability),
     path('user/profile/<int:id>/', views.user_profile),
 
     path('user/profile/<int:id>/',views.user_profile),

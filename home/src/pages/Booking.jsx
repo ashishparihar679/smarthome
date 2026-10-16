@@ -105,6 +105,7 @@ function Booking(){
 
 const [services,setServices] = useState([]);
 const [workers,setWorkers] = useState([]);
+const [cities,setCities] = useState([]);
 
 const [service,setService] = useState("");
 const [worker,setWorker] = useState("");
@@ -125,13 +126,15 @@ loadData()
 
 const loadData = async ()=>{
 try{
-  const [sRes,wRes] = await Promise.all([
+  const [sRes,wRes,cRes] = await Promise.all([
     API.get("services/"),
-    API.get("workers/")
+    API.get("workers/"),
+    API.get("cities/")
   ])
 
   setServices(sRes.data || [])
   setWorkers(wRes.data || [])
+  setCities(cRes.data || [])
 
 }catch{
   toast.error("Failed to load data")
@@ -258,11 +261,9 @@ animate={{opacity:1,y:0}}
 <label htmlFor="booking-address">Service address</label>
 <div className="bk-input">
 <span className="bk-field-icon"><FaMapMarkerAlt/></span>
-<BookingSelect id="booking-address" name="address" value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="Select your area" options={[
-  { value: "Anand Nagar", label: "Anand Nagar" },
-  { value: "MP Nagar", label: "MP Nagar" },
-  { value: "Indrapuri", label: "Indrapuri" },
-]} />
+<BookingSelect id="booking-address" name="address" value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="Select your area" options={cities.map((city)=>(
+  { value: city.name, label: city.name }
+))} />
 </div>
 </div>
 

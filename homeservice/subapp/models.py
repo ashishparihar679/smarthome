@@ -17,6 +17,12 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+class City(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Worker(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)

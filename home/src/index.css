@@ -2874,6 +2874,23 @@ button{font:inherit}
 .smarthome-dark .lg-input input,.smarthome-dark .sg-input input,.smarthome-dark .rg-input input,.smarthome-dark .wr-input input,.smarthome-dark .sg-input select,.smarthome-dark .wr-input select{color:#e2e8f0}.smarthome-dark .lg-text{color:#a7b4c6}.smarthome-dark .admin-card .service-card,.smarthome-dark .admin-card .worker-card{background:#14243a;border-color:#34465f;color:#e2e8f0}
 @media(max-width:640px){.lg-container,.sg-container,.rg-container,.wr-container,.add-service-container{padding:28px 15px}.lg-card,.sg-card,.rg-card,.wr-card,.add-card{padding:29px 21px;border-radius:25px}.lg-card h2,.sg-card h2,.rg-card h2,.wr-card h2,.add-title{font-size:29px}.admin-container,.au-container,.ud-container,.wd-container{padding:30px 16px}.analytics-card,.chart-card,.admin-card,.au-card,.ud-card,.wd-card{padding:21px;border-radius:21px}.ud-form,.wd-form{grid-template-columns:1fr}.ud-form button,.wd-form button{grid-column:auto}.au-filter-bar{flex-direction:column}.au-select{width:100%}.sg-btn-group{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.lg-card,.sg-card,.rg-card,.wr-card,.add-card,.analytics-card,.chart-card,.admin-card,.au-card,.ud-card,.wd-card,.lg-input,.sg-input,.rg-input,.wr-input,.lg-btn,.rg-btn,.wr-btn,.sg-btn{transition:none}}
+.worker-summary{display:flex;flex-wrap:wrap;gap:9px;margin:-7px 0 18px}
+.worker-summary span,.worker-status{display:inline-flex;align-items:center;border:1px solid #dbe6f3;border-radius:999px;padding:6px 10px;background:#f1f6fd;color:#475569;font-size:12px;font-weight:650}
+.worker-statuses{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:12px 0}
+.worker-status.is-approved,.worker-status.is-available{background:#ecfdf5;border-color:#bbf7d0;color:#047857}
+.worker-status.is-pending{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.worker-status.is-unavailable{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+.worker-service{margin:5px 0;color:#64748b;font-size:14px}
+.worker-actions{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:9px;margin-top:15px}
+.worker-actions .worker-contact-btn,.worker-actions .availability-btn,.worker-actions .approve-btn{min-height:40px;padding:9px 13px;border:1px solid #d5e2f2;border-radius:12px;background:#eff6ff;color:#174ea6;text-decoration:none;font-size:13px;font-weight:650;cursor:pointer}
+.worker-actions .approve-btn{background:#16a36a;color:#fff;border-color:#16a36a}
+.worker-actions .availability-btn{background:#f8fafc;color:#334155}
+.worker-actions .worker-contact-btn:hover,.worker-actions .availability-btn:hover{filter:brightness(.96)}
+.smarthome-dark .worker-summary span,.smarthome-dark .worker-status{background:#1b3555;border-color:#344b68;color:#cbd5e1}
+.smarthome-dark .worker-service{color:#a7b4c6}
+.smarthome-dark .worker-status.is-approved,.smarthome-dark .worker-status.is-available{background:#123c35;border-color:#206b56;color:#9de3c8}
+.smarthome-dark .worker-status.is-pending{background:#422d1b;border-color:#74502b;color:#ffd59a}
+.smarthome-dark .worker-actions .worker-contact-btn,.smarthome-dark .worker-actions .availability-btn{background:#1b3555;border-color:#344b68;color:#c9dcf5}
 .admin-card::before,.ud-card::before,.wd-card::before{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin:0 0 12px;padding:7px 12px;border:1px solid #d7e7ff;border-radius:999px;background:#eaf2ff;color:#0f52ba;font-size:10px;letter-spacing:.12em;font-weight:700}
 .admin-card::before{content:"✦ ADMIN CONSOLE"}.ud-card::before{content:"✦ USER WORKSPACE"}.wd-card::before{content:"✦ PROFESSIONAL WORKSPACE"}
 .smarthome-dark .admin-card::before,.smarthome-dark .ud-card::before,.smarthome-dark .wd-card::before{background:#1b3555;border-color:#2b4b70;color:#a9ccfa}

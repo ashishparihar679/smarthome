@@ -12,9 +12,12 @@ BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 function AdminDashboard(){
 
 const [services,setServices] = useState([])
+const [cities,setCities] = useState([])
 const [workers,setWorkers] = useState([])
 const [serviceName,setServiceName] = useState("")
+const [cityName,setCityName] = useState("")
 const [loading,setLoading] = useState(false)
+const [cityLoading,setCityLoading] = useState(false)
 
 const [admin,setAdmin] = useState({})
 const [edit,setEdit] = useState(false)
@@ -28,6 +31,7 @@ const adminId = localStorage.getItem("user_id")
 
 useEffect(()=>{
   loadServices()
+  loadCities()
   loadWorkers()
   loadAdmin()
 },[])
@@ -58,6 +62,15 @@ try{
   setServices(res.data || [])
 }catch{
   toast.error("Failed to load services")
+}
+}
+
+const loadCities = async ()=>{
+try{
+  const res = await API.get("cities/")
+  setCities(res.data || [])
+}catch{
+  toast.error("Failed to load cities")
 }
 }
 
@@ -123,6 +136,44 @@ if(result.isConfirmed){
 }
 }
 
+const addCity = async ()=>{
+if(!cityName.trim()){
+  toast.warning("Enter city name")
+  return
+}
+try{
+  setCityLoading(true)
+  await API.post("cities/", {name: cityName.trim()})
+  toast.success("City Added")
+  setCityName("")
+  loadCities()
+}catch(err){
+  const apiError = err.response?.data
+  const message = apiError?.name?.[0] || apiError?.detail || apiError?.error || (typeof apiError === "string" ? apiError : null)
+  toast.error(message || (err.response ? `Failed to add city (${err.response.status})` : "Cannot reach the server. Check that the backend is running."))
+}finally{
+  setCityLoading(false)
+}
+}
+
+const deleteCity = async (id)=>{
+const result = await Swal.fire({
+  title:"Delete City?",
+  text:"This city will be removed from the city list.",
+  icon:"warning",
+  showCancelButton:true,
+  confirmButtonColor:"#e74c3c"
+})
+if(!result.isConfirmed) return
+try{
+  await API.delete(`cities/delete/${id}/`)
+  toast.success("City Deleted")
+  loadCities()
+}catch{
+  toast.error("Could not delete city")
+}
+}
+
 /* ================= APPROVE WORKER ================= */
 
 const approveWorker = async (id)=>{
@@ -133,6 +184,16 @@ try{
   loadWorkers()
 }catch{
   toast.error("Approval failed")
+}
+}
+
+const toggleWorkerAvailability = async (worker)=>{
+try{
+  const res = await API.put(`worker/availability/${worker.id}/`)
+  setWorkers(current => current.map(item => item.id === worker.id ? {...item, available: res.data.available} : item))
+  toast.success(res.data.available ? "Worker marked available" : "Worker marked unavailable")
+}catch{
+  toast.error("Could not update worker availability")
 }
 }
 
@@ -292,11 +353,42 @@ Delete
 
 </div>
 
+{/* ===== CITIES ===== */}
+<div className="admin-card">
+<h3>Cities</h3>
+<div className="service-add">
+<input
+  placeholder="Enter city name"
+  value={cityName}
+  onChange={(e)=>setCityName(e.target.value)}
+  onKeyDown={(e)=>{if(e.key === "Enter") addCity()}}
+/>
+<button onClick={addCity} disabled={cityLoading}>
+{cityLoading ? "Adding..." : "Add"}
+</button>
+</div>
+{cities.length === 0 ? <p>No cities added yet</p> : (
+<div className="services-grid">
+{cities.map(city=>(
+<div className="service-card" key={city.id}>
+<h4>{city.name}</h4>
+<button className="delete-btn" onClick={()=>deleteCity(city.id)}>Delete</button>
+</div>
+))}
+</div>
+)}
+</div>
+
 {/* ===== WORKERS ===== */}
 
 <div className="admin-card">
 
 <h3>Workers</h3>
+<div className="worker-summary" aria-label="Worker approval summary">
+<span>{workers.length} total</span>
+<span>{workers.filter(w=>w.approved).length} approved</span>
+<span>{workers.filter(w=>!w.approved).length} pending approval</span>
+</div>
 
 {workers.length === 0 ? (
 <p>No workers available</p>
@@ -310,11 +402,15 @@ Delete
 
 <h4>{w.name}</h4>
 <p>{w.phone}</p>
+<p className="worker-service">{services.find(service => service.id === w.service)?.name || "Service not set"}</p>
 
-<p className={w.approved ? "approved":"pending"}>
-{w.approved ? "Approved":"Pending"}
-</p>
+<div className="worker-statuses">
+<span className={`worker-status ${w.approved ? "is-approved":"is-pending"}`}>{w.approved ? "Approved":"Pending approval"}</span>
+{w.approved && <span className={`worker-status ${w.available ? "is-available":"is-unavailable"}`}>{w.available ? "Available":"Unavailable"}</span>}
+</div>
 
+<div className="worker-actions">
+<a className="worker-contact-btn" href={`tel:${w.phone}`}>Call worker</a>
 {!w.approved && (
 <button
 className="approve-btn"
@@ -323,6 +419,8 @@ onClick={()=>approveWorker(w.id)}
 Approve
 </button>
 )}
+{w.approved && <button className="availability-btn" onClick={()=>toggleWorkerAvailability(w)}>{w.available ? "Mark unavailable":"Mark available"}</button>}
+</div>
 
 </div>
 
