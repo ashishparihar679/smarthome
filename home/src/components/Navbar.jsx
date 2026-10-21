@@ -45,6 +45,7 @@ const logout = ()=>{
 // ================= ACTIVE LINK (BETTER) =================
 
 const isActive = (path)=>{
+  if (path === "/") return location.pathname === "/"
   return location.pathname.startsWith(path)
 }
 

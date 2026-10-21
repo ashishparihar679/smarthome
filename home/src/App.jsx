@@ -57,7 +57,7 @@ function App() {
         transition={{ duration: 0.5 }}
       >
         <Routes>
-          <Route path="/" element={<Services />} />
+          <Route path="/" element={<><Services /><About /></>} />
           <Route path="/workers" element={<Workers />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/my-bookings" element={<MyBookings />} />
@@ -73,7 +73,6 @@ function App() {
         </Routes>
       </motion.div>
 
-      <About />
       <Footer />
     </BrowserRouter>
   );
