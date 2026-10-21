@@ -1,8 +1,10 @@
 from django.urls import path
-from . import views
+from . import analytics, views
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
+
+    path('admin/analytics/', analytics.admin_analytics),
 
     path('services/', views.services),
     path('services/delete/<int:id>/', views.delete_service),

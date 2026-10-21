@@ -2,11 +2,12 @@ import io
 import tempfile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
+from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Booking, Review, Service, User, Worker
+from .models import Booking, City, Review, Service, User, Worker
 
 
 class BookingAndReviewApiTests(APITestCase):
@@ -99,3 +100,63 @@ class BookingAndReviewApiTests(APITestCase):
         self.assertFalse(professional.approved)
         self.assertEqual(professional.skills, 'Pipes, taps')
         self.assertIn('profile', professional.profile_photo.name)
+
+
+class AdminAnalyticsApiTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='analytics-admin', email='analytics-admin@example.com', password='secure-password', phone='5551111111', role='ADMIN')
+        self.customer = User.objects.create_user(username='analytics-customer', email='analytics-customer@example.com', password='secure-password', phone='5552222222')
+        self.worker_user = User.objects.create_user(username='analytics-worker', email='analytics-worker@example.com', password='secure-password', phone='5553333333', role='WORKER')
+        self.pending_worker_user = User.objects.create_user(username='pending-worker', email='pending-worker@example.com', password='secure-password', phone='5554444444', role='WORKER')
+        self.service = Service.objects.create(name='AC repair')
+        self.other_service = Service.objects.create(name='Painter')
+        self.city = City.objects.create(name='Bhopal')
+        self.worker = Worker.objects.create(user=self.worker_user, name='Available Pro', phone=self.worker_user.phone, service=self.service, service_area=' Bhopal ', approved=True, available=True)
+        Worker.objects.create(user=self.pending_worker_user, name='Pending Pro', phone=self.pending_worker_user.phone, service=self.other_service, service_area='Bhopal', approved=False, available=True)
+        self.completed_booking = Booking.objects.create(user=self.customer, worker=self.worker, service=self.service, booking_date=timezone.localdate(), address='12 Lake Road, BHOPAL', status='COMPLETED')
+        self.pending_booking = Booking.objects.create(user=self.customer, worker=None, service=self.other_service, booking_date=timezone.localdate(), address='Unknown area', status='PENDING')
+        Review.objects.create(booking=self.completed_booking, customer=self.customer, worker=self.worker, rating=4, comment='Good service')
+
+    def auth(self, user):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(user)}')
+
+    def test_analytics_are_admin_only_and_aggregate_real_records(self):
+        denied = self.client.get('/admin/analytics/')
+        self.assertEqual(denied.status_code, 401)
+        self.auth(self.customer)
+        denied = self.client.get('/admin/analytics/')
+        self.assertEqual(denied.status_code, 403)
+
+        self.auth(self.admin)
+        response = self.client.get('/admin/analytics/', {
+            'range': 'today', 'bucket': 'day', 'city': self.city.id,
+            'service': self.service.id, 'status': 'COMPLETED',
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.data
+        self.assertEqual(data['global']['total'], 4)
+        self.assertEqual(data['global']['customers'], 1)
+        self.assertEqual(data['global']['registered_professionals'], 2)
+        self.assertEqual(data['global']['administrators'], 1)
+        self.assertEqual(data['global']['professionals'], 2)
+        self.assertEqual(data['global']['pending_professional_approvals'], 1)
+        self.assertEqual(data['global']['service_categories'], 2)
+        self.assertEqual(data['global']['cities'], 1)
+        self.assertEqual(data['global']['average_rating'], 4.0)
+        self.assertEqual(data['period']['bookings']['total'], 1)
+        self.assertEqual(data['period']['bookings']['completed'], 1)
+        self.assertEqual(data['period']['bookings']['pending'], 0)
+        self.assertEqual(data['cities'][0]['bookings'], 1)
+        self.assertEqual(data['cities'][0]['customers_with_bookings'], 1)
+        self.assertEqual(data['cities'][0]['available_professionals'], 1)
+        self.assertEqual(data['cities'][0]['services'], ['AC repair'])
+        self.assertEqual(len(data['services']), 1)
+        self.assertEqual(data['services'][0]['completion_rate'], 100.0)
+        self.assertEqual(data['services'][0]['average_rating'], 4.0)
+
+    def test_analytics_validates_date_and_status_filters(self):
+        self.auth(self.admin)
+        invalid_dates = self.client.get('/admin/analytics/', {'range': 'custom', 'start': 'not-a-date', 'end': '2026-01-01'})
+        self.assertEqual(invalid_dates.status_code, 400)
+        invalid_status = self.client.get('/admin/analytics/', {'status': 'UNKNOWN'})
+        self.assertEqual(invalid_status.status_code, 400)
