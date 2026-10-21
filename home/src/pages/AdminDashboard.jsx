@@ -53,13 +53,6 @@ const [phone,setPhone] = useState("")
 const adminId = localStorage.getItem("user_id")
 
 useEffect(()=>{
-  loadServices()
-  loadCities()
-  loadWorkers()
-  loadAdmin()
-},[loadAdmin])
-
-useEffect(()=>{
   if(dateRange === "custom" && (!customStart || !customEnd)) return
   let current = true
   const params = {range:dateRange,bucket,city:cityFilter,service:serviceFilter,status:statusFilter}
@@ -122,6 +115,13 @@ try{
   toast.error("Failed to load workers")
 }
 }
+
+useEffect(()=>{
+  loadServices()
+  loadCities()
+  loadWorkers()
+  loadAdmin()
+},[loadAdmin])
 
 /* ================= ADD SERVICE ================= */
 
