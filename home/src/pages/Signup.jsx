@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import FormSelect from "../components/FormSelect";
+import { getApiErrorMessage, isValidEmail, isValidPhone, isValidUsername } from "../utils/validation";
 
 import {
 FaUser,
@@ -53,15 +54,20 @@ const submitSignup = async (e)=>{
 
 e.preventDefault();
 
-if(!username || !password || !email){
+if(!username || !password || !email || !phone){
   toast.warning("Please fill required fields")
   return
 }
 
-if(password.length < 5){
-  toast.warning("Password must be at least 5 characters")
+if(password.length < 8){
+  toast.warning("Password must be at least 8 characters")
   return
 }
+
+if (!isValidEmail(email)) { toast.warning("Enter a valid email address"); return; }
+if (!isValidPhone(phone)) { toast.warning("Enter a valid phone number (7–15 digits)"); return; }
+if (username.trim().length > 150) { toast.warning("Username cannot exceed 150 characters"); return; }
+if (!isValidUsername(username)) { toast.warning("Username can use letters, numbers, @, ., +, -, _, and /"); return; }
 
 if(role === "WORKER" && !serviceId){
   toast.warning("Please select service")
@@ -72,13 +78,13 @@ try{
   setLoading(true)
 
   await API.post("register/",{
-    username,
+    username: username.trim(),
     password,
-    phone,
+    phone: phone.trim(),
     role,
     first_name:firstName,
     last_name:lastName,
-    email,
+    email: email.trim(),
     service: role === "WORKER" ? serviceId : null
   })
 
@@ -88,14 +94,9 @@ try{
   navigate("/login")
 
 }catch(err){
-
-  if(err.response?.data?.username){
-    toast.error(err.response.data.username[0])
-  }else if(err.response?.data?.email){
-    toast.error(err.response.data.email[0])
-  }else{
-    toast.error("Signup Failed")
-  }
+  const errors = err.response?.data;
+  const firstError = errors && Object.values(errors).flat(Infinity).find((value) => typeof value === "string");
+  toast.error(firstError || getApiErrorMessage(err, "Signup failed. Check the form and try again."));
 
 }finally{
   setLoading(false)
@@ -119,27 +120,27 @@ transition={{duration:0.5}}
 <form onSubmit={submitSignup}>
 
 <div className="sg-input"><FaUser/>
-<input value={firstName} placeholder="First Name" onChange={(e)=>setFirstName(e.target.value)}/>
+<input value={firstName} placeholder="First Name" maxLength={150} onChange={(e)=>setFirstName(e.target.value)}/>
 </div>
 
 <div className="sg-input"><FaUser/>
-<input value={lastName} placeholder="Last Name" onChange={(e)=>setLastName(e.target.value)}/>
+<input value={lastName} placeholder="Last Name" maxLength={150} onChange={(e)=>setLastName(e.target.value)}/>
 </div>
 
 <div className="sg-input"><FaUser/>
-<input value={username} placeholder="Username" onChange={(e)=>setUsername(e.target.value)}/>
+<input value={username} placeholder="Username" maxLength={150} onChange={(e)=>setUsername(e.target.value)} required />
 </div>
 
 <div className="sg-input"><FaEnvelope/>
-<input value={email} type="email" placeholder="Email" onChange={(e)=>setEmail(e.target.value)}/>
+<input value={email} type="email" maxLength={254} placeholder="Email" onChange={(e)=>setEmail(e.target.value)} required />
 </div>
 
 <div className="sg-input"><FaLock/>
-<input value={password} type="password" placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
+<input value={password} type="password" minLength={8} placeholder="Password (at least 8 characters)" onChange={(e)=>setPassword(e.target.value)} required />
 </div>
 
 <div className="sg-input"><FaPhone/>
-<input value={phone} placeholder="Phone" onChange={(e)=>setPhone(e.target.value)}/>
+<input value={phone} type="tel" maxLength={15} inputMode="tel" placeholder="Phone" onChange={(e)=>setPhone(e.target.value)} required />
 </div>
 
 <div className="sg-role-field">
@@ -154,7 +155,6 @@ transition={{duration:0.5}}
   options={[
     { value: "USER", label: "User" },
     { value: "WORKER", label: "Worker" },
-    { value: "ADMIN", label: "Admin" },
   ]}
 />
 </div>

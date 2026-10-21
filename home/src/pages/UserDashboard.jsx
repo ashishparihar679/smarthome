@@ -7,6 +7,7 @@ import Swal from "sweetalert2"
 import { motion } from "framer-motion"
 
 import { FaUser, FaCalendarCheck } from "react-icons/fa"
+import { getApiErrorMessage, isValidEmail, isValidPhone } from "../utils/validation"
 
 function UserDashboard(){
 
@@ -63,19 +64,23 @@ try{
 
 const updateProfile = async ()=>{
 
+if (!firstName.trim() || firstName.trim().length > 150 || lastName.trim().length > 150) { toast.warning("Enter a first name and keep each name within 150 characters"); return; }
+if (!isValidEmail(email)) { toast.warning("Enter a valid email address"); return; }
+if (!isValidPhone(phone)) { toast.warning("Enter a valid phone number (7–15 digits)"); return; }
+
 try{
   await API.put(`user/profile/${userId}/`,{
-    first_name:firstName,
-    last_name:lastName,
-    email,
-    phone
+    first_name:firstName.trim(),
+    last_name:lastName.trim(),
+    email:email.trim(),
+    phone:phone.trim()
   })
 
   toast.success("Profile Updated")
   setEdit(false)
 
-}catch{
-  toast.error("Update Failed")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Profile update failed"))
 }
 
 }
@@ -154,6 +159,11 @@ Logout
 <p>Total Bookings</p>
 </div>
 
+<div className="ud-stat"><FaCalendarCheck/><h3>{bookings.filter(b=>["ACCEPTED","IN_PROGRESS"].includes(b.status)).length}</h3><p>Active</p></div>
+<div className="ud-stat"><FaCalendarCheck/><h3>{bookings.filter(b=>b.status==="PENDING").length}</h3><p>Pending</p></div>
+<div className="ud-stat"><FaCalendarCheck/><h3>{bookings.filter(b=>b.status==="COMPLETED").length}</h3><p>Completed</p></div>
+<div className="ud-stat"><FaCalendarCheck/><h3>{bookings.filter(b=>b.status==="CANCELLED").length}</h3><p>Cancelled</p></div>
+
 </div>
 
 {/* ===== PROFILE ===== */}
@@ -180,10 +190,10 @@ Edit Profile
 
 <div className="ud-form">
 
-<input value={firstName} placeholder="First name" onChange={e=>setFirstName(e.target.value)}/>
-<input value={lastName} placeholder="Last name" onChange={e=>setLastName(e.target.value)}/>
-<input value={email} placeholder="Email address" onChange={e=>setEmail(e.target.value)}/>
-<input value={phone} placeholder="Phone number" onChange={e=>setPhone(e.target.value)}/>
+<input value={firstName} maxLength={150} placeholder="First name" onChange={e=>setFirstName(e.target.value)} required />
+<input value={lastName} maxLength={150} placeholder="Last name" onChange={e=>setLastName(e.target.value)}/>
+<input type="email" maxLength={254} value={email} placeholder="Email address" onChange={e=>setEmail(e.target.value)} required />
+<input type="tel" maxLength={15} inputMode="tel" value={phone} placeholder="Phone number" onChange={e=>setPhone(e.target.value)} required />
 
 <button className="ud-btn" onClick={updateProfile}>
 Save

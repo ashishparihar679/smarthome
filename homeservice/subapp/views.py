@@ -1,18 +1,33 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Avg, Count
+from django.utils.dateparse import parse_date
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import serializers
 
-from .models import Service, City, Worker, Booking,User
-from .serializers import ServiceSerializer, WorkerSerializer, BookingSerializer, UserSerializer
+from .models import Service, City, Worker, Booking, User, Review
+from .serializers import ServiceSerializer, WorkerSerializer, BookingSerializer, UserSerializer, ReviewSerializer
+
+
+def is_admin(user):
+    return user.is_authenticated and (user.is_staff or user.role == 'ADMIN')
+
+
+def worker_for_user(user):
+    return Worker.objects.filter(user=user).first() or Worker.objects.filter(phone=user.phone).first()
 
 
 # -------------------------
 # SERVICES LIST
 # -------------------------
 @api_view(['GET','POST'])
+@permission_classes([AllowAny])
 def services(request):
 
     if request.method == "GET":
@@ -21,6 +36,7 @@ def services(request):
         return Response(serializer.data)
 
     if request.method == "POST":
+        if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
         serializer = ServiceSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -31,7 +47,9 @@ def services(request):
 # -------------------------
 # service delete
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_service(request,id):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
 
     service = get_object_or_404(Service,id=id)
 
@@ -40,10 +58,12 @@ def delete_service(request,id):
     return Response({"message":"Service Deleted"})
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def cities(request):
     if request.method == 'GET':
         return Response([{"id": city.id, "name": city.name} for city in City.objects.order_by('name')])
 
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
     name = request.data.get('name', '').strip()
     if not name:
         return Response({"name": ["Enter a city name."]}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,64 +73,81 @@ def cities(request):
     return Response({"id": city.id, "name": city.name}, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_city(request, id):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
     city = get_object_or_404(City, id=id)
     city.delete()
     return Response({"message": "City Deleted"})
 # WORKERS LIST (FILTER BY SERVICE)
 # -------------------------
 @api_view(['GET','POST'])
+@permission_classes([AllowAny])
 def workers(request):
 
     if request.method == "GET":
 
-        workers = Worker.objects.all()
-        serializer = WorkerSerializer(workers, many=True)
+        workers = Worker.objects.select_related('service').annotate(_rating=Avg('reviews__rating'), _count=Count('reviews'))
+        if not is_admin(request.user):
+            workers = workers.filter(approved=True, available=True)
+        serializer = WorkerSerializer(workers, many=True, context={'request': request})
         return Response(serializer.data)
 
-    if request.method == "POST":
-
-        serializer = WorkerSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors)
+    return Response({'detail': 'Professional profiles are created during account registration.'}, status=405)
 
 
 # -------------------------
 # CREATE BOOKING
 # -------------------------
 @api_view(['GET','POST'])
+@permission_classes([IsAuthenticated])
 def create_booking(request):
 
     if request.method == "GET":
 
-        bookings = Booking.objects.all()
-        serializer = BookingSerializer(bookings, many=True)
+        if is_admin(request.user):
+            bookings = Booking.objects.all()
+        elif request.user.role == 'WORKER':
+            worker = worker_for_user(request.user)
+            bookings = Booking.objects.filter(worker=worker) if worker else Booking.objects.none()
+        else:
+            bookings = Booking.objects.filter(user=request.user)
+        bookings = bookings.select_related('service','worker','user').order_by('-created_at')
+        serializer = BookingSerializer(bookings, many=True, context={'request': request})
         return Response(serializer.data)
 
     if request.method == "POST":
 
-        serializer = BookingSerializer(data=request.data)
+        if request.user.role != 'USER':
+            return Response({'detail': 'Only customers can create bookings.'}, status=403)
+        service_id = request.data.get('service')
+        worker_id = request.data.get('worker')
+        worker = None
+        if worker_id:
+            worker = Worker.objects.filter(pk=worker_id, service_id=service_id, approved=True, available=True).first()
+            if not worker:
+                return Response({'worker': ['Select an available professional for this service.']}, status=400)
+        else:
+            worker = Worker.objects.filter(service_id=service_id, approved=True, available=True).order_by('id').first()
+        serializer = BookingSerializer(data=request.data, context={'request': request})
 
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            booking = serializer.save(user=request.user, worker=worker)
+            return Response(BookingSerializer(booking, context={'request': request}).data, status=201)
 
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=400)
 # -------------------------
 # WORKER BOOKINGS
 # -------------------------
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def worker_bookings(request):
+    worker = worker_for_user(request.user)
+    if not worker or (request.user.role != 'WORKER' and not is_admin(request.user)):
+        return Response({'detail': 'Professional access required.'}, status=403)
+    bookings = Booking.objects.filter(worker=worker)
 
-    worker_id = request.GET.get("worker")
-
-    bookings = Booking.objects.filter(worker_id=worker_id)
-
-    serializer = BookingSerializer(bookings, many=True)
+    serializer = BookingSerializer(bookings, many=True, context={'request': request})
 
     return Response(serializer.data)
 
@@ -119,9 +156,14 @@ def worker_bookings(request):
 # ACCEPT BOOKING
 # -------------------------
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def accept_booking(request, id):
 
     booking = get_object_or_404(Booking, id=id)
+    worker = worker_for_user(request.user)
+    if not worker or booking.worker_id != worker.id or request.user.role != 'WORKER':
+        return Response({'detail': 'You may only update your assigned bookings.'}, status=403)
+    if booking.status != 'PENDING': return Response({'detail': 'Only pending bookings can be accepted.'}, status=400)
 
     booking.status = "ACCEPTED"
     booking.save()
@@ -133,9 +175,14 @@ def accept_booking(request, id):
 # REJECT BOOKING
 # -------------------------
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def reject_booking(request, id):
 
     booking = get_object_or_404(Booking, id=id)
+    worker = worker_for_user(request.user)
+    if not worker or booking.worker_id != worker.id or request.user.role != 'WORKER':
+        return Response({'detail': 'You may only update your assigned bookings.'}, status=403)
+    if booking.status != 'PENDING': return Response({'detail': 'Only pending bookings can be rejected.'}, status=400)
 
     booking.status = "REJECTED"
     booking.save()
@@ -147,9 +194,14 @@ def reject_booking(request, id):
 # COMPLETE BOOKING
 # -------------------------
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def complete_booking(request, id):
 
     booking = get_object_or_404(Booking, id=id)
+    worker = worker_for_user(request.user)
+    if not worker or booking.worker_id != worker.id or request.user.role != 'WORKER':
+        return Response({'detail': 'You may only update your assigned bookings.'}, status=403)
+    if booking.status not in ('ACCEPTED','IN_PROGRESS'): return Response({'detail': 'Only accepted bookings can be completed.'}, status=400)
 
     booking.status = "COMPLETED"
     booking.save()
@@ -157,12 +209,53 @@ def complete_booking(request, id):
     return Response({"message": "Service Completed"})
 
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def start_booking(request, id):
+    booking = get_object_or_404(Booking, id=id)
+    worker = worker_for_user(request.user)
+    if request.user.role != 'WORKER' or not worker or booking.worker_id != worker.id:
+        return Response({'detail': 'You may only update your assigned bookings.'}, status=403)
+    if booking.status != 'ACCEPTED':
+        return Response({'detail': 'Only accepted bookings can be started.'}, status=400)
+    booking.status = 'IN_PROGRESS'
+    booking.save(update_fields=['status'])
+    return Response({'message': 'Service started'})
+
+
 # -------------------------
 # REGISTER USER
 # -------------------------
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def register(request):
+
+    if request.data.get('role', 'USER') == 'WORKER' and not Service.objects.filter(id=request.data.get('service')).exists():
+        return Response({'service': ['Select a valid service.']}, status=400)
+    if request.data.get('role', 'USER') == 'WORKER':
+        name = f"{request.data.get('first_name', '').strip()} {request.data.get('last_name', '').strip()}".strip()
+        if not name or len(name) > 100:
+            return Response({'first_name': ['Enter a professional name up to 100 characters.']}, status=400)
+        if len(request.data.get('skills', '')) > 500:
+            return Response({'skills': ['Skills must be 500 characters or fewer.']}, status=400)
+        if len(request.data.get('service_area', '')) > 120:
+            return Response({'service_area': ['Service area must be 120 characters or fewer.']}, status=400)
+        try:
+            experience = int(request.data.get('experience') or 0)
+        except (TypeError, ValueError):
+            return Response({'experience': ['Enter a whole number from 0 to 60.']}, status=400)
+        if not 0 <= experience <= 60:
+            return Response({'experience': ['Enter a whole number from 0 to 60.']}, status=400)
+        photo = request.FILES.get('profile_photo')
+        if photo:
+            if photo.size > 5 * 1024 * 1024:
+                return Response({'profile_photo': ['Image must be 5 MB or smaller.']}, status=400)
+            try:
+                serializers.ImageField().run_validation(photo)
+            except (serializers.ValidationError, DjangoValidationError) as error:
+                messages = error.detail if isinstance(error, serializers.ValidationError) else error.messages
+                return Response({'profile_photo': messages}, status=400)
 
     serializer = UserSerializer(data=request.data)
 
@@ -170,16 +263,16 @@ def register(request):
 
         user = serializer.save()
 
-        # अगर worker signup कर रहा है
         if user.role == "WORKER":
-
-            Worker.objects.create(
-                name=user.first_name,
-                phone=user.phone,
-                service_id=request.data.get("service"),
-                available=True,
-                approved=False
-            )
+            service_id = request.data.get('service')
+            if not service_id:
+                user.delete()
+                return Response({'service': ['A service is required for professional registration.']}, status=400)
+            Worker.objects.create(user=user, name=f'{user.first_name} {user.last_name}'.strip() or user.username,
+                phone=user.phone, service_id=service_id, experience=request.data.get('experience') or 0,
+                service_area=request.data.get('service_area', ''), skills=request.data.get('skills', ''),
+                bio=request.data.get('bio', ''), profile_photo=request.data.get('profile_photo'),
+                available=True, approved=False)
 
         return Response({
             "message": "Account created successfully"
@@ -202,14 +295,20 @@ def login(request):
     if not check_password(password, user.password):
         return Response({"error":"Invalid Email or Password"}, status=400)
 
+    refresh = RefreshToken.for_user(user)
     return Response({
         "message":"Login Successful",
         "role":user.role,
         "user_id":user.id,
-        "email":user.email
+        "email":user.email,
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
     })
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def approve_worker(request,id):
+
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
 
     worker = get_object_or_404(Worker,id=id)
 
@@ -219,7 +318,9 @@ def approve_worker(request,id):
     return Response({"message":"Worker Approved"})
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def toggle_worker_availability(request, id):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
     worker = get_object_or_404(Worker, id=id)
     worker.available = not worker.available
     worker.save(update_fields=['available'])
@@ -243,9 +344,12 @@ def user_profile(request, id):
     return Response(data)
 
 @api_view(['GET','PUT'])
+@permission_classes([IsAuthenticated])
 def user_profile(request,id):
 
     user = get_object_or_404(User,id=id)
+    if user.id != request.user.id and not is_admin(request.user):
+        return Response({'detail': 'You may only access your own profile.'}, status=403)
 
     if request.method == "GET":
         data = {
@@ -256,6 +360,10 @@ def user_profile(request,id):
             "email":user.email,
             "phone":user.phone
         }
+        if user.role == 'WORKER':
+            worker = worker_for_user(user)
+            if worker:
+                data['professional_profile'] = WorkerSerializer(worker, context={'request': request}).data
         return Response(data)
 
     if request.method == "PUT":
@@ -270,19 +378,56 @@ def user_profile(request,id):
         return Response({"message":"Profile Updated"})
     
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def cancel_booking(request,id):
 
     booking = get_object_or_404(Booking,id=id)
+    if booking.user_id != request.user.id and not is_admin(request.user):
+        return Response({'detail': 'You may only cancel your own bookings.'}, status=403)
+    if booking.status not in ('PENDING','ACCEPTED'):
+        return Response({'detail': 'This booking can no longer be cancelled.'}, status=400)
 
     booking.status = "CANCELLED"
     booking.save()
 
     return Response({"message":"Booking Cancelled"})
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_review(request, id):
+    booking = get_object_or_404(Booking.objects.select_related('worker'), id=id)
+    if booking.user_id != request.user.id:
+        return Response({'detail': 'You can only review your own booking.'}, status=403)
+    if booking.status != 'COMPLETED' or not booking.worker_id:
+        return Response({'detail': 'A completed booking with an assigned professional is required.'}, status=400)
+    if Review.objects.filter(booking=booking).exists():
+        return Response({'detail': 'This booking has already been reviewed.'}, status=409)
+    serializer = ReviewSerializer(data=request.data)
+    if serializer.is_valid():
+        review = serializer.save(booking=booking, customer=request.user, worker=booking.worker)
+        return Response(ReviewSerializer(review).data, status=201)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def worker_reviews(request, id):
+    worker = get_object_or_404(Worker, id=id)
+    if not worker.approved and not (request.user.is_authenticated and (worker.user_id == request.user.id or is_admin(request.user))):
+        return Response({'detail': 'Professional profile not found.'}, status=404)
+    reviews = Review.objects.filter(worker=worker).select_related('customer','booking')
+    data = ReviewSerializer(reviews, many=True).data
+    summary = {str(star): reviews.filter(rating=star).count() for star in range(1, 6)}
+    return Response({'average_rating': round(reviews.aggregate(value=Avg('rating'))['value'] or 0, 1),
+                     'rating_count': reviews.count(), 'distribution': summary, 'reviews': data})
+
     
 # Get All Users
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def all_users(request):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
     users = User.objects.all().values(
         "id","username","first_name","last_name","email","phone","role"
     )
@@ -296,7 +441,9 @@ def all_users(request):
 
 # Add User
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_user(request):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
 
     role = request.data.get("role")
     service_id = request.data.get("service")
@@ -325,7 +472,9 @@ def add_user(request):
 
 # Update User
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_user(request,id):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
 
     user = get_object_or_404(User,id=id)
 
@@ -359,7 +508,9 @@ def update_user(request,id):
 
 # Delete User
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_user(request,id):
+    if not is_admin(request.user): return Response({'detail': 'Administrator access required.'}, status=403)
 
     user = get_object_or_404(User,id=id)
     user.delete()

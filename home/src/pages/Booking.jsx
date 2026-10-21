@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import API from "../api/api";
 import { toast } from "react-toastify";
+import { getApiErrorMessage, isValidPhone } from "../utils/validation";
 import { motion } from "framer-motion";
 
 import {
@@ -102,21 +104,25 @@ function BookingSelect({ id, value, onChange, placeholder, options, name }) {
 }
 
 function Booking(){
+const location = useLocation();
 
 const [services,setServices] = useState([]);
 const [workers,setWorkers] = useState([]);
 const [cities,setCities] = useState([]);
 
-const [service,setService] = useState("");
+const [service,setService] = useState(location.state?.serviceId ? String(location.state.serviceId) : "");
 const [worker,setWorker] = useState("");
 const [date,setDate] = useState("");
 const [address,setAddress] = useState("");
+const [timeSlot,setTimeSlot] = useState("");
+const [phone,setPhone] = useState("");
+const [details,setDetails] = useState("");
+const [instructions,setInstructions] = useState("");
 
 const [loading,setLoading] = useState(true);
 const [btnLoading,setBtnLoading] = useState(false);
 const [success,setSuccess] = useState(false);
 
-const userId = localStorage.getItem("user_id");
 
 /* ================= LOAD ================= */
 
@@ -147,27 +153,35 @@ try{
 
 const submitBooking = async ()=>{
 
-if(!service || !worker || !date || !address){
+if(!service || !date || !address || !phone || !details){
   toast.warning("Please fill all fields")
   return
 }
+const today = new Date();
+today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+if (date < today.toISOString().slice(0, 10)) { toast.warning("Choose today or a future date"); return; }
+if (!isValidPhone(phone)) { toast.warning("Enter a valid contact number (7–15 digits)"); return; }
+if (!details.trim()) { toast.warning("Describe the service you need"); return; }
 
 try{
   setBtnLoading(true)
 
-  await API.post("bookings/",{
-    user:userId,
+  const response = await API.post("bookings/",{
     service,
-    worker,
+    worker: worker || null,
     booking_date:date,
-    address
+    time_slot:timeSlot,
+    address,
+    contact_phone:phone,
+    problem_description:details,
+    instructions
   })
 
-  toast.success("Booking Created Successfully")
+  toast.success(`Booking #${response.data.id} created successfully`)
   setSuccess(true)
 
-}catch{
-  toast.error("Booking Failed")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Booking failed. Check your details and try again."))
 }finally{
   setBtnLoading(false)
 }
@@ -230,7 +244,7 @@ animate={{opacity:1,y:0}}
 <label htmlFor="booking-service">Service category</label>
 <div className="bk-input">
 <span className="bk-field-icon"><FaTools/></span>
-<BookingSelect id="booking-service" name="service" value={service} onChange={(e)=>setService(e.target.value)} placeholder="Select a service" options={services.map((s)=>(
+<BookingSelect id="booking-service" name="service" value={service} onChange={(e)=>{setService(e.target.value);setWorker("")}} placeholder="Select a service" options={services.map((s)=>(
   { value: String(s.id), label: s.name }
 ))} />
 </div>
@@ -241,8 +255,8 @@ animate={{opacity:1,y:0}}
 <label htmlFor="booking-worker">Preferred professional</label>
 <div className="bk-input">
 <span className="bk-field-icon"><FaUserTie/></span>
-<BookingSelect id="booking-worker" name="professional" value={worker} onChange={(e)=>setWorker(e.target.value)} placeholder="Select a professional" options={workers.map((w)=>(
-  { value: String(w.id), label: w.name }
+<BookingSelect id="booking-worker" name="professional" value={worker} onChange={(e)=>setWorker(e.target.value)} placeholder="Let us assign a professional" options={workers.filter((w)=>String(w.service)===String(service)).map((w)=>(
+  { value: String(w.id), label: `${w.name} · ★ ${w.average_rating || "New"} · ${w.experience || 0} yrs` }
 ))} />
 </div>
 </div>
@@ -252,7 +266,7 @@ animate={{opacity:1,y:0}}
 <label htmlFor="booking-date">Preferred date</label>
 <div className="bk-input">
 <span className="bk-field-icon"><FaCalendarAlt/></span>
-<input id="booking-date" type="date" value={date} onChange={(e)=>setDate(e.target.value)}/>
+<input id="booking-date" type="date" min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)} value={date} onChange={(e)=>setDate(e.target.value)} required />
 </div>
 </div>
 
@@ -266,6 +280,11 @@ animate={{opacity:1,y:0}}
 ))} />
 </div>
 </div>
+
+<div className="bk-field"><label htmlFor="booking-time">Preferred time slot</label><select id="booking-time" value={timeSlot} onChange={(e)=>setTimeSlot(e.target.value)}><option value="">Select a time</option><option>Morning (8 AM–12 PM)</option><option>Afternoon (12 PM–4 PM)</option><option>Evening (4 PM–8 PM)</option></select></div>
+<div className="bk-field"><label htmlFor="booking-phone">Contact phone</label><input id="booking-phone" type="tel" maxLength={15} inputMode="tel" value={phone} onChange={(e)=>setPhone(e.target.value)} required /></div>
+<div className="bk-field"><label htmlFor="booking-details">What needs attention?</label><textarea id="booking-details" maxLength={3000} value={details} onChange={(e)=>setDetails(e.target.value)} required /></div>
+<div className="bk-field"><label htmlFor="booking-instructions">Additional instructions</label><textarea id="booking-instructions" maxLength={3000} value={instructions} onChange={(e)=>setInstructions(e.target.value)} /></div>
 
 <button className="bk-btn" onClick={submitBooking}>
 {btnLoading ? "Booking..." : <>Book Service <FaCheck aria-hidden="true" /></>}

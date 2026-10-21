@@ -168,6 +168,7 @@ function Service() {
               <div className="sm-card-top"><div className="sm-icon"><ServiceIcon serviceName={service.name} /></div><span className="sm-card-arrow" aria-hidden="true">↗</span></div>
 
               <h3>{service.name}</h3>
+              <p className="sm-service-rating">★ {Number(service.average_rating || 0).toFixed(1)}/5 · {service.rating_count || 0} reviews</p>
 
               <p>
                 {getServiceDescription(service.name)}

@@ -12,6 +12,8 @@ urlpatterns = [
     path('workers/', views.workers),
 
     path('bookings/', views.create_booking),
+    path('bookings/<int:id>/review/', views.create_review),
+    path('professionals/<int:id>/reviews/', views.worker_reviews),
     
 
     path('worker/bookings/', views.worker_bookings),
@@ -21,6 +23,7 @@ urlpatterns = [
     path('booking/reject/<int:id>/', views.reject_booking),
 
     path('booking/complete/<int:id>/', views.complete_booking),
+    path('booking/start/<int:id>/', views.start_booking),
 
     path('register/', views.register),
     path('login/', views.login),

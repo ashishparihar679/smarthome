@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../api/api";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { getApiErrorMessage, isValidEmail, isValidPhone } from "../utils/validation";
 import Swal from "sweetalert2";
 import { FaUsers, FaTools } from "react-icons/fa";
 
@@ -93,6 +94,8 @@ if(!serviceName.trim()){
   toast.warning("Enter service name")
   return
 }
+if (serviceName.trim().length > 100) { toast.warning("Service name must be 100 characters or fewer"); return; }
+if (services.some((service) => service.name.toLowerCase() === serviceName.trim().toLowerCase())) { toast.warning("That service already exists"); return; }
 
 try{
   setLoading(true)
@@ -141,6 +144,8 @@ if(!cityName.trim()){
   toast.warning("Enter city name")
   return
 }
+if (cityName.trim().length > 100) { toast.warning("City name must be 100 characters or fewer"); return; }
+if (cities.some((city) => city.name.toLowerCase() === cityName.trim().toLowerCase())) { toast.warning("That city already exists"); return; }
 try{
   setCityLoading(true)
   await API.post("cities/", {name: cityName.trim()})
@@ -201,24 +206,26 @@ try{
 
 const updateAdmin = async ()=>{
 
-if(!firstName || !email){
-  toast.warning("Name & Email required")
+if(!firstName.trim() || firstName.trim().length > 150 || lastName.trim().length > 150){
+  toast.warning("Enter a first name and keep each name within 150 characters")
   return
 }
+if (!isValidEmail(email)) { toast.warning("Enter a valid email address"); return; }
+if (!isValidPhone(phone)) { toast.warning("Enter a valid phone number (7–15 digits)"); return; }
 
 try{
   await API.put(`user/profile/${adminId}/`,{
-    first_name:firstName,
-    last_name:lastName,
-    email:email,
-    phone:phone
+    first_name:firstName.trim(),
+    last_name:lastName.trim(),
+    email:email.trim(),
+    phone:phone.trim()
   })
 
   toast.success("Profile Updated")
   setEdit(false)
 
-}catch{
-  toast.error("Update failed")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Profile update failed"))
 }
 }
 
@@ -292,10 +299,10 @@ animate={{opacity:1,y:0}}
 
 <div>
 
-<input value={firstName} onChange={(e)=>setFirstName(e.target.value)} placeholder="First Name"/>
-<input value={lastName} onChange={(e)=>setLastName(e.target.value)} placeholder="Last Name"/>
-<input value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="Email"/>
-<input value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="Phone"/>
+<input value={firstName} maxLength={150} onChange={(e)=>setFirstName(e.target.value)} placeholder="First Name" required />
+<input value={lastName} maxLength={150} onChange={(e)=>setLastName(e.target.value)} placeholder="Last Name"/>
+<input value={email} type="email" maxLength={254} onChange={(e)=>setEmail(e.target.value)} placeholder="Email" required />
+<input value={phone} type="tel" maxLength={15} inputMode="tel" onChange={(e)=>setPhone(e.target.value)} placeholder="Phone" required />
 
 <button onClick={updateAdmin}>Save</button>
 
@@ -315,6 +322,7 @@ animate={{opacity:1,y:0}}
 
 <input
 placeholder="Enter service name"
+maxLength={100}
 value={serviceName}
 onChange={(e)=>setServiceName(e.target.value)}
 />
@@ -359,6 +367,7 @@ Delete
 <div className="service-add">
 <input
   placeholder="Enter city name"
+  maxLength={100}
   value={cityName}
   onChange={(e)=>setCityName(e.target.value)}
   onKeyDown={(e)=>{if(e.key === "Enter") addCity()}}

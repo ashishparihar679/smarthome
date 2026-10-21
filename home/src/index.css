@@ -2636,6 +2636,11 @@ transform:translateY(0);
   color:var(--wk-primary);
   margin-bottom:10px;
 }
+.wk-avatar img{width:76px;height:76px;border-radius:50%;object-fit:cover;display:block}
+.wk-rating,.sm-service-rating{color:#d18a00;font-weight:700}
+.wk-reviews{margin-top:14px;padding:12px;border-radius:12px;background:rgba(40,90,150,.06)}
+.wk-reviews article{padding:8px 0;border-bottom:1px solid rgba(120,140,160,.2)}
+.mb-details{margin:12px 0;padding:12px;border-radius:10px;background:rgba(40,90,150,.06)}
 
 /* TEXT */
 

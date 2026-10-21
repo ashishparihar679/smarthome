@@ -114,6 +114,7 @@ onClick={()=>setMenuOpen(!menuOpen)}
 Book Service
 </Link>
 </li>
+<li className={isActive("/my-bookings") ? "sm-active" : ""}><Link to="/my-bookings" onClick={handleLinkClick}>My Bookings</Link></li>
 </>
 )}
 
@@ -142,6 +143,7 @@ Book Service
 {/* GUEST */}
 {!role && (
 <>
+<li><Link to="/WorkerRegister" onClick={handleLinkClick}>Join as a Professional</Link></li>
 <li className={isActive("/signup") ? "sm-active" : ""}>
 <Link to="/signup" onClick={handleLinkClick}>Signup</Link>
 </li>

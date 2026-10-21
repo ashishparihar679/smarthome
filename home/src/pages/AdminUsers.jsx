@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { toast } from "react-toastify"
 import Swal from "sweetalert2"
 import { FaUsers } from "react-icons/fa"
+import { getApiErrorMessage, isValidEmail, isValidPhone, isValidUsername } from "../utils/validation";
 
 function AdminUsers(){
 
@@ -71,11 +72,15 @@ if(!form.username){
   toast.warning("Username required")
   return
 }
-
+if (form.username.trim().length > 150) { toast.warning("Username cannot exceed 150 characters"); return; }
+if (!isValidUsername(form.username)) { toast.warning("Username can use letters, numbers, @, ., +, -, _, and /"); return; }
+if (!form.email || !isValidEmail(form.email)) { toast.warning("Enter a valid email address"); return; }
+if (!isValidPhone(form.phone)) { toast.warning("Enter a valid phone number (7–15 digits)"); return; }
 if(!editId && !form.password){
   toast.warning("Password required")
   return
 }
+if (!editId && form.password.length < 8) { toast.warning("Password must be at least 8 characters"); return; }
 
 if(editId && newPassword && newPassword.length < 8){
   toast.warning("Password must be at least 8 characters")
@@ -86,17 +91,21 @@ if(form.role === "WORKER" && !form.serviceId){
   toast.warning("Select service")
   return
 }
+const duplicateUsername = users.some((user) => user.id !== editId && user.username?.toLowerCase() === form.username.trim().toLowerCase());
+if (duplicateUsername) { toast.warning("That username is already in use"); return; }
+const duplicateEmail = users.some((user) => user.id !== editId && user.email?.toLowerCase() === form.email.trim().toLowerCase());
+if (duplicateEmail) { toast.warning("That email is already registered"); return; }
 
 try{
   setLoading(true)
 
   const payload = {
-    username:form.username,
+    username:form.username.trim(),
     password:form.password,
     first_name:form.firstName,
     last_name:form.lastName,
-    email:form.email,
-    phone:form.phone,
+    email:form.email.trim(),
+    phone:form.phone.trim(),
     role:form.role,
     service: form.role === "WORKER" ? form.serviceId : null,
     ...(editId && newPassword ? {password:newPassword} : {})
@@ -113,8 +122,8 @@ try{
   clearForm()
   loadUsers()
 
-}catch{
-  toast.error("Operation Failed")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Could not save this account"))
 }finally{
   setLoading(false)
 }
@@ -204,16 +213,16 @@ return(
 
 <h3>{editId ? "Edit User" : "Add User"}</h3>
 
-<input name="username" value={form.username} onChange={handleChange} placeholder="Username"/>
+<input name="username" value={form.username} maxLength={150} onChange={handleChange} placeholder="Username" required />
 
 {!editId && (
-<input name="password" value={form.password} onChange={handleChange} placeholder="Password"/>
+<input name="password" type="password" value={form.password} minLength={8} onChange={handleChange} placeholder="Password (8+ characters)" required={!editId} />
 )}
 
 <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name"/>
 <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name"/>
-<input name="email" value={form.email} onChange={handleChange} placeholder="Email"/>
-<input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone"/>
+<input name="email" type="email" maxLength={254} value={form.email} onChange={handleChange} placeholder="Email" required />
+<input name="phone" type="tel" maxLength={15} inputMode="tel" value={form.phone} onChange={handleChange} placeholder="Phone" required />
 
 <select name="role" value={form.role} onChange={handleChange}>
 <option value="USER">User</option>

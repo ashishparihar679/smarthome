@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
+import { isValidEmail, getApiErrorMessage } from "../utils/validation";
 
 function Login(){
 
@@ -22,6 +23,7 @@ if(!email || !password){
   toast.warning("Please enter email and password")
   return
 }
+if (!isValidEmail(email)) { toast.warning("Enter a valid email address"); return; }
 
 try{
   setLoading(true)
@@ -40,6 +42,8 @@ try{
     localStorage.setItem("role", role)
     localStorage.setItem("user_id", res.data.user_id)
     localStorage.setItem("email", res.data.email)
+    localStorage.setItem("access_token", res.data.access)
+    localStorage.setItem("refresh_token", res.data.refresh)
 
     // ROLE BASED NAVIGATION
     if(role === "USER") navigate("/UserDashboard")
@@ -50,8 +54,8 @@ try{
     toast.error("Login Failed")
   }
 
-}catch{
-  toast.error("Invalid Email or Password")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Invalid email or password"))
 }finally{
   setLoading(false)
 }
@@ -80,6 +84,7 @@ type="email"
 placeholder="Enter Email"
 value={email}
 onChange={(e)=>setEmail(e.target.value)}
+required
 />
 </div>
 
@@ -92,6 +97,7 @@ type={showPassword ? "text" : "password"}
 placeholder="Enter Password"
 value={password}
 onChange={(e)=>setPassword(e.target.value)}
+required
 />
 
 <span

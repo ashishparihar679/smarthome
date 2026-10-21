@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 
 import { motion } from "framer-motion";
 import { FaUserTie, FaTools } from "react-icons/fa";
+import { getApiErrorMessage, isValidEmail, isValidPhone } from "../utils/validation";
 
 function WorkerDashboard(){
 
@@ -13,6 +14,7 @@ const workerId = localStorage.getItem("user_id")
 
 const [profile,setProfile] = useState({})
 const [bookings,setBookings] = useState([])
+const [reviews,setReviews] = useState([])
 const [loading,setLoading] = useState(true)
 const [edit,setEdit] = useState(false)
 
@@ -44,6 +46,10 @@ try{
   setPhone(data.phone || "")
 
   setBookings(bookingRes.data || [])
+  if (data.professional_profile?.id) {
+    const reviewRes = await API.get(`professionals/${data.professional_profile.id}/reviews/`)
+    setReviews(reviewRes.data.reviews || [])
+  }
 
 }catch{
   toast.error("Failed to load data")
@@ -56,13 +62,16 @@ try{
 /* UPDATE PROFILE */
 
 const updateProfile = async ()=>{
+if (!firstName.trim() || firstName.trim().length > 150 || lastName.trim().length > 150) { toast.warning("Enter a first name and keep each name within 150 characters"); return; }
+if (!isValidEmail(email)) { toast.warning("Enter a valid email address"); return; }
+if (!isValidPhone(phone)) { toast.warning("Enter a valid phone number (7–15 digits)"); return; }
 try{
 
   await API.put(`user/profile/${workerId}/`,{
-    first_name:firstName,
-    last_name:lastName,
-    email,
-    phone
+    first_name:firstName.trim(),
+    last_name:lastName.trim(),
+    email:email.trim(),
+    phone:phone.trim()
   })
 
   toast.success("Profile Updated")
@@ -77,8 +86,8 @@ try{
 
   setEdit(false)
 
-}catch{
-  toast.error("Update failed")
+}catch(error){
+  toast.error(getApiErrorMessage(error, "Profile update failed"))
 }
 }
 
@@ -164,6 +173,13 @@ try{
 }
 }
 
+const startBooking = async (id)=>{
+try{
+  await API.put(`booking/start/${id}/`)
+  setBookings(prev => prev.map(b => b.id === id ? {...b, status:"IN_PROGRESS"} : b))
+}catch{ toast.error("Could not update booking") }
+}
+
 /* LOGOUT */
 
 const logout = ()=>{
@@ -183,7 +199,9 @@ return(
 
 <div className="wd-container">
 
-<h1 className="wd-title">Worker Dashboard</h1>
+<h1 className="wd-title">Professional Dashboard</h1>
+{profile.professional_profile && <p className="wd-rating">★ {Number(profile.professional_profile.average_rating || 0).toFixed(1)}/5 · {profile.professional_profile.rating_count || 0} customer reviews {profile.professional_profile.approved ? "· Verified" : "· Pending verification"}</p>}
+{reviews.length > 0 && <section className="wd-card" aria-label="Customer reviews"><h2>Customer Reviews</h2>{reviews.map((review) => <article key={review.id}><strong>{review.customer_name || "Customer"} · {"★".repeat(review.rating)}</strong><p>{review.comment || "No written comment"}</p></article>)}</section>}
 
 <button className="wd-logout" onClick={logout}>
 Logout
@@ -196,14 +214,16 @@ Logout
 <div className="wd-stat">
 <FaUserTie/>
 <h3>{profile.first_name}</h3>
-<p>Worker Profile</p>
+<p>Professional Profile</p>
 </div>
 
 <div className="wd-stat">
 <FaTools/>
 <h3>{bookings.length}</h3>
-<p>Total Requests</p>
+<p>Total Jobs</p>
 </div>
+<div className="wd-stat"><FaTools/><h3>{bookings.filter((booking) => booking.status === "COMPLETED").length}</h3><p>Completed Jobs</p></div>
+<div className="wd-stat"><FaTools/><h3>{bookings.filter((booking) => booking.status === "PENDING").length}</h3><p>Pending Requests</p></div>
 
 </div>
 
@@ -211,7 +231,7 @@ Logout
 
 <motion.div className="wd-card">
 
-<h2>Worker Profile</h2>
+<h2>Professional Profile</h2>
 
 {!edit ? (
 
@@ -231,10 +251,10 @@ Edit Profile
 
 <div className="wd-form">
 
-<input value={firstName} placeholder="First name" onChange={e=>setFirstName(e.target.value)}/>
-<input value={lastName} placeholder="Last name" onChange={e=>setLastName(e.target.value)}/>
-<input value={email} placeholder="Email address" onChange={e=>setEmail(e.target.value)}/>
-<input value={phone} placeholder="Phone number" onChange={e=>setPhone(e.target.value)}/>
+<input value={firstName} maxLength={150} placeholder="First name" onChange={e=>setFirstName(e.target.value)} required />
+<input value={lastName} maxLength={150} placeholder="Last name" onChange={e=>setLastName(e.target.value)}/>
+<input type="email" maxLength={254} value={email} placeholder="Email address" onChange={e=>setEmail(e.target.value)} required />
+<input type="tel" maxLength={15} inputMode="tel" value={phone} placeholder="Phone number" onChange={e=>setPhone(e.target.value)} required />
 
 <button className="wd-btn" onClick={updateProfile}>
 Save
@@ -296,6 +316,10 @@ Save
 )}
 
 {b.status==="ACCEPTED" && (
+<button className="wd-accept" onClick={()=>startBooking(b.id)}>Start service</button>
+)}
+
+{b.status==="IN_PROGRESS" && (
 <button className="wd-complete" onClick={()=>completeBooking(b.id)}>
 Complete
 </button>
