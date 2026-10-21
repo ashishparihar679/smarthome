@@ -67,7 +67,7 @@ useEffect(()=>{
   setAnalyticsLoading(true)
   setAnalyticsError("")
   setAnalytics(null)
-  API.get("admin/analytics/",{params})
+  API.get("analytics/admin/",{params})
     .then(({data})=>{if(current) setAnalytics(data)})
     .catch((error)=>{if(current) {setAnalyticsError(getApiErrorMessage(error,"Could not load analytics")); setAnalytics(null)}})
     .finally(()=>{if(current) setAnalyticsLoading(false)})

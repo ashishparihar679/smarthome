@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react"
+import { useCallback, useEffect,useState } from "react"
 import API from "../api/api"
 
 import { toast } from "react-toastify"
@@ -25,11 +25,7 @@ const [phone,setPhone] = useState("")
 
 /* LOAD DATA */
 
-useEffect(()=>{
-loadData()
-},[])
-
-const loadData = async ()=>{
+const loadData = useCallback(async ()=>{
 try{
 
   const [profileRes, bookingRes] = await Promise.all([
@@ -57,8 +53,11 @@ try{
 }finally{
   setLoading(false)
 }
+},[userId])
 
-}
+useEffect(()=>{
+loadData()
+},[loadData])
 
 /* UPDATE PROFILE */
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createElement } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 
@@ -53,7 +54,7 @@ const getServiceIcon = (serviceName = "") => {
 
 function ServiceIcon({ serviceName }) {
   const Icon = getServiceIcon(serviceName);
-  return <Icon />;
+  return createElement(Icon);
 }
 
 function Service() {
@@ -71,7 +72,7 @@ function Service() {
     try {
       const res = await API.get("services/");
       setServices(res.data || []);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load services");
     } finally {
       setLoading(false);

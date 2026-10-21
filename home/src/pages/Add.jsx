@@ -30,7 +30,7 @@ toast.success("Service Added Successfully");
 
 setName("");
 
-}catch(err){
+}catch{
 
 toast.error("Failed to add service");
 

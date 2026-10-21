@@ -15,14 +15,6 @@ const [dark,setDark] = useState(false)
 
 // ================= INITIAL THEME LOAD =================
 
-useEffect(()=>{
-  const savedTheme = localStorage.getItem("theme")
-  if(savedTheme === "dark"){
-    setDark(true)
-    document.body.classList.add("smarthome-dark")
-  }
-},[])
-
 // ================= DARK MODE =================
 
 useEffect(()=>{

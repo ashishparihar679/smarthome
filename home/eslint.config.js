@@ -23,7 +23,10 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Core ESLint does not count JSX member tags such as <motion.div> as
+      // variable reads. Keep those imports lint-safe while still checking all
+      // ordinary variables.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
     },
   },
 ])

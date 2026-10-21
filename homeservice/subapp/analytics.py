@@ -157,7 +157,7 @@ def admin_analytics(request):
         {"name": "Administrators", "value": user_lifetime["administrators"], "role": "ADMIN"},
     ]
     booking_status_distribution = [
-        {"name": label, "value": bookings_period[key], "status": key}
+        {"name": label, "value": bookings_period[key.lower()], "status": key}
         for key, label in (("PENDING", "Pending"), ("ACCEPTED", "Accepted"), ("IN_PROGRESS", "In progress"), ("COMPLETED", "Completed"), ("CANCELLED", "Cancelled"), ("REJECTED", "Rejected"))
     ]
 
@@ -205,7 +205,7 @@ def admin_analytics(request):
             "average_rating": round(float(booking_row.get("average_rating") or 0), 1),
         })
 
-    workers_lifetime = Worker.objects.aggregate(total=Count("id"), pending_approval=Count("id", filter=Q(approved=False)), approved=Count("id", filter=Q(approved=True)), available=Count("id", filter=Q(approved=True, available=True)))
+    workers_lifetime = Worker.objects.aggregate(total=Count("id"), pending_approval=Count("id", filter=Q(approved=False)), approved_total=Count("id", filter=Q(approved=True)), available_total=Count("id", filter=Q(approved=True, available=True)))
     area_values = Worker.objects.exclude(service_area__isnull=True).exclude(service_area__exact="").values_list("service_area", flat=True)
     distinct_areas = {" ".join(area.split()).casefold() for area in area_values if area and " ".join(area.split())}
     catalog_city_count = len(seen_cities)
@@ -248,8 +248,8 @@ def admin_analytics(request):
         "professionals": workers_lifetime["total"],
         "registered_professionals": user_lifetime["professionals"],
         "pending_professional_approvals": workers_lifetime["pending_approval"],
-        "approved_professionals": workers_lifetime["approved"],
-        "available_professionals": workers_lifetime["available"],
+        "approved_professionals": workers_lifetime["approved_total"],
+        "available_professionals": workers_lifetime["available_total"],
         "service_categories": len(services),
         "cities": catalog_city_count,
         "service_areas": len(distinct_areas),

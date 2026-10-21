@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ======================
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-secret-key-change-this-before-deployment-32chars')
 
 # ❗ Render पर DEBUG हमेशा False होना चाहिए
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'

@@ -1,5 +1,6 @@
 import io
 import tempfile
+from pathlib import Path
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
@@ -14,7 +15,7 @@ class BookingAndReviewApiTests(APITestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.test_media = tempfile.TemporaryDirectory()
+        cls.test_media = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent.parent)
         cls.media_settings = override_settings(MEDIA_ROOT=cls.test_media.name)
         cls.media_settings.enable()
 
@@ -121,14 +122,14 @@ class AdminAnalyticsApiTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {AccessToken.for_user(user)}')
 
     def test_analytics_are_admin_only_and_aggregate_real_records(self):
-        denied = self.client.get('/admin/analytics/')
+        denied = self.client.get('/analytics/admin/')
         self.assertEqual(denied.status_code, 401)
         self.auth(self.customer)
-        denied = self.client.get('/admin/analytics/')
+        denied = self.client.get('/analytics/admin/')
         self.assertEqual(denied.status_code, 403)
 
         self.auth(self.admin)
-        response = self.client.get('/admin/analytics/', {
+        response = self.client.get('/analytics/admin/', {
             'range': 'today', 'bucket': 'day', 'city': self.city.id,
             'service': self.service.id, 'status': 'COMPLETED',
         })
@@ -156,7 +157,7 @@ class AdminAnalyticsApiTests(APITestCase):
 
     def test_analytics_validates_date_and_status_filters(self):
         self.auth(self.admin)
-        invalid_dates = self.client.get('/admin/analytics/', {'range': 'custom', 'start': 'not-a-date', 'end': '2026-01-01'})
+        invalid_dates = self.client.get('/analytics/admin/', {'range': 'custom', 'start': 'not-a-date', 'end': '2026-01-01'})
         self.assertEqual(invalid_dates.status_code, 400)
-        invalid_status = self.client.get('/admin/analytics/', {'status': 'UNKNOWN'})
+        invalid_status = self.client.get('/analytics/admin/', {'status': 'UNKNOWN'})
         self.assertEqual(invalid_status.status_code, 400)
